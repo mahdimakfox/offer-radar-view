@@ -13,6 +13,9 @@ export interface Provider {
   external_url: string;
   pros?: string[];
   cons?: string[];
+  org_number?: string;
+  industry_code?: string;
+  ehf_invoice_support?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -45,6 +48,9 @@ export const providerService = {
         external_url: row.external_url,
         pros: row.pros || undefined,
         cons: row.cons || undefined,
+        org_number: row.org_number || undefined,
+        industry_code: row.industry_code || undefined,
+        ehf_invoice_support: row.ehf_invoice_support || false,
         created_at: row.created_at || undefined,
         updated_at: row.updated_at || undefined,
       }));
@@ -60,7 +66,7 @@ export const providerService = {
         .from('providers')
         .select('*')
         .eq('category', category)
-        .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
+        .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,org_number.ilike.%${searchTerm}%`)
         .order('rating', { ascending: false });
 
       if (error) {
@@ -79,6 +85,9 @@ export const providerService = {
         external_url: row.external_url,
         pros: row.pros || undefined,
         cons: row.cons || undefined,
+        org_number: row.org_number || undefined,
+        industry_code: row.industry_code || undefined,
+        ehf_invoice_support: row.ehf_invoice_support || false,
         created_at: row.created_at || undefined,
         updated_at: row.updated_at || undefined,
       }));
@@ -114,6 +123,9 @@ export const providerService = {
         external_url: data.external_url,
         pros: data.pros || undefined,
         cons: data.cons || undefined,
+        org_number: data.org_number || undefined,
+        industry_code: data.industry_code || undefined,
+        ehf_invoice_support: data.ehf_invoice_support || false,
         created_at: data.created_at || undefined,
         updated_at: data.updated_at || undefined,
       };

@@ -66,6 +66,36 @@ export type Database = {
         }
         Relationships: []
       }
+      norwegian_provider_cache: {
+        Row: {
+          address: string | null
+          company_name: string | null
+          created_at: string | null
+          ehf_support: boolean | null
+          id: string
+          industry_code: string | null
+          org_number: string | null
+        }
+        Insert: {
+          address?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          ehf_support?: boolean | null
+          id?: string
+          industry_code?: string | null
+          org_number?: string | null
+        }
+        Update: {
+          address?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          ehf_support?: boolean | null
+          id?: string
+          industry_code?: string | null
+          org_number?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -129,10 +159,13 @@ export type Database = {
           cons: string[] | null
           created_at: string | null
           description: string
+          ehf_invoice_support: boolean | null
           external_url: string
           id: number
+          industry_code: string | null
           logo_url: string | null
           name: string
+          org_number: string | null
           price: number
           pros: string[] | null
           rating: number
@@ -143,10 +176,13 @@ export type Database = {
           cons?: string[] | null
           created_at?: string | null
           description: string
+          ehf_invoice_support?: boolean | null
           external_url: string
           id?: number
+          industry_code?: string | null
           logo_url?: string | null
           name: string
+          org_number?: string | null
           price?: number
           pros?: string[] | null
           rating?: number
@@ -157,10 +193,13 @@ export type Database = {
           cons?: string[] | null
           created_at?: string | null
           description?: string
+          ehf_invoice_support?: boolean | null
           external_url?: string
           id?: number
+          industry_code?: string | null
           logo_url?: string | null
           name?: string
+          org_number?: string | null
           price?: number
           pros?: string[] | null
           rating?: number

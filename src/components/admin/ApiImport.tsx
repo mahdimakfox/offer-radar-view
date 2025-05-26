@@ -5,18 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, Download, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface ApiMapping {
-  id: string;
-  provider_name: string;
-  api_url: string;
-  api_type: string;
-  auth_required: boolean;
-  data_mapping: any;
-  created_at: string;
-  updated_at: string;
-}
+import { useDataAcquisition } from '@/hooks/useDataAcquisition';
+import { dataAcquisitionService, ApiMapping } from '@/services/dataAcquisitionService';
 
 interface FetchResult {
   provider_name: string;
@@ -31,6 +21,7 @@ const ApiImport = () => {
   const [fetching, setFetching] = useState<string | null>(null);
   const [results, setResults] = useState<FetchResult[]>([]);
   const { toast } = useToast();
+  const { importData } = useDataAcquisition();
 
   useEffect(() => {
     loadApiMappings();
@@ -38,106 +29,33 @@ const ApiImport = () => {
 
   const loadApiMappings = async () => {
     try {
-      const { data, error } = await supabase
-        .from('provider_api_mappings')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading API mappings:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load API mappings",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      setApiMappings(data || []);
+      const mappings = await dataAcquisitionService.getApiMappings();
+      setApiMappings(mappings);
     } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
-  const fetchApiData = async (mapping: ApiMapping): Promise<FetchResult> => {
-    try {
-      // Simulate API fetch - in real implementation, this would be an edge function
-      // For demo purposes, we'll create mock data
-      const mockData = {
-        providers: [
-          {
-            name: `${mapping.provider_name} Premium`,
-            price: Math.random() * 500 + 100,
-            rating: Math.random() * 2 + 3,
-            description: `Latest data from ${mapping.provider_name} API`,
-            external_url: mapping.api_url,
-            category: 'strom'
-          },
-          {
-            name: `${mapping.provider_name} Standard`,
-            price: Math.random() * 300 + 50,
-            rating: Math.random() * 2 + 3,
-            description: `Standard offering from ${mapping.provider_name}`,
-            external_url: mapping.api_url,
-            category: 'strom'
-          }
-        ]
-      };
-
-      // Insert the fetched data into providers table
-      const { data, error } = await supabase
-        .from('providers')
-        .upsert(mockData.providers, { 
-          onConflict: 'name',
-          ignoreDuplicates: false 
-        })
-        .select();
-
-      if (error) {
-        return {
-          provider_name: mapping.provider_name,
-          success: false,
-          message: `Error importing data: ${error.message}`
-        };
-      }
-
-      // Log the import
-      await supabase.from('import_logs').insert({
-        category: 'API Import',
-        total_providers: mockData.providers.length,
-        successful_imports: data?.length || 0,
-        failed_imports: mockData.providers.length - (data?.length || 0),
-        import_status: 'completed'
+      console.error('Error loading API mappings:', error);
+      toast({
+        title: "Feil",
+        description: "Kunne ikke laste API-mappings",
+        variant: "destructive"
       });
-
-      return {
-        provider_name: mapping.provider_name,
-        success: true,
-        message: `Successfully imported ${data?.length || 0} providers`,
-        data_count: data?.length || 0
-      };
-
-    } catch (error) {
-      console.error(`Error fetching data for ${mapping.provider_name}:`, error);
-      return {
-        provider_name: mapping.provider_name,
-        success: false,
-        message: `Failed to fetch data: ${error instanceof Error ? error.message : 'Unknown error'}`
-      };
     }
   };
 
   const handleFetchSingle = async (mapping: ApiMapping) => {
     setFetching(mapping.id);
     try {
-      const result = await fetchApiData(mapping);
-      setResults(prev => [result, ...prev.filter(r => r.provider_name !== mapping.provider_name)]);
+      const result = await importData('strom', mapping.id);
       
-      toast({
-        title: result.success ? "Success" : "Error",
-        description: result.message,
-        variant: result.success ? "default" : "destructive"
-      });
+      const fetchResult: FetchResult = {
+        provider_name: mapping.provider_name,
+        success: result !== null,
+        message: result 
+          ? `Importerte ${result.success} leverandører, ${result.failed} feilet`
+          : 'Import feilet',
+        data_count: result?.success || 0
+      };
+      
+      setResults(prev => [fetchResult, ...prev.filter(r => r.provider_name !== mapping.provider_name)]);
     } finally {
       setFetching(null);
     }
@@ -152,8 +70,18 @@ const ApiImport = () => {
       
       for (const mapping of apiMappings) {
         setFetching(mapping.id);
-        const result = await fetchApiData(mapping);
-        fetchResults.push(result);
+        const result = await importData('strom', mapping.id);
+        
+        const fetchResult: FetchResult = {
+          provider_name: mapping.provider_name,
+          success: result !== null,
+          message: result 
+            ? `Importerte ${result.success} leverandører, ${result.failed} feilet`
+            : 'Import feilet',
+          data_count: result?.success || 0
+        };
+        
+        fetchResults.push(fetchResult);
       }
 
       setResults(fetchResults);
@@ -162,8 +90,8 @@ const ApiImport = () => {
       const totalData = fetchResults.reduce((sum, r) => sum + (r.data_count || 0), 0);
 
       toast({
-        title: "Batch fetch completed",
-        description: `${successCount}/${fetchResults.length} APIs processed successfully. ${totalData} providers updated.`,
+        title: "Batch import fullført",
+        description: `${successCount}/${fetchResults.length} API-er behandlet. ${totalData} leverandører oppdatert.`,
         variant: successCount === fetchResults.length ? "default" : "destructive"
       });
 
@@ -179,7 +107,7 @@ const ApiImport = () => {
         <div>
           <h3 className="text-lg font-semibold">API Mappings</h3>
           <p className="text-sm text-gray-600">
-            {apiMappings.length} API endpoints configured
+            {apiMappings.length} API-endepunkter konfigurert
           </p>
         </div>
         <div className="flex space-x-2">
@@ -189,7 +117,7 @@ const ApiImport = () => {
             size="sm"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            Oppdater
           </Button>
           <Button
             onClick={handleFetchAll}
@@ -197,7 +125,7 @@ const ApiImport = () => {
             size="sm"
           >
             <Download className="h-4 w-4 mr-2" />
-            {loading ? 'Fetching...' : 'Fetch All'}
+            {loading ? 'Henter...' : 'Hent alle'}
           </Button>
         </div>
       </div>
@@ -212,7 +140,7 @@ const ApiImport = () => {
                   <CardDescription className="flex items-center space-x-2">
                     <Badge variant="outline">{mapping.api_type}</Badge>
                     {mapping.auth_required && (
-                      <Badge variant="secondary">Auth Required</Badge>
+                      <Badge variant="secondary">Autentisering påkrevd</Badge>
                     )}
                   </CardDescription>
                 </div>
@@ -263,7 +191,14 @@ const ApiImport = () => {
       {apiMappings.length === 0 && (
         <Card>
           <CardContent className="text-center py-8">
-            <p className="text-gray-500">No API mappings configured yet.</p>
+            <p className="text-gray-500">Ingen API-mappings konfigurert ennå.</p>
+            <p className="text-sm text-gray-400 mt-2">
+              API-mappings ble automatisk opprettet under migreringen
+            </p>
+            <Button onClick={loadApiMappings} className="mt-4" variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Last på nytt
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -271,7 +206,7 @@ const ApiImport = () => {
       {results.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Recent Fetch Results</CardTitle>
+            <CardTitle className="text-lg">Siste hente-resultater</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -286,7 +221,7 @@ const ApiImport = () => {
                     <strong>{result.provider_name}:</strong> {result.message}
                   </span>
                   <Badge variant={result.success ? "default" : "destructive"}>
-                    {result.success ? 'Success' : 'Failed'}
+                    {result.success ? 'Suksess' : 'Feilet'}
                   </Badge>
                 </div>
               ))}

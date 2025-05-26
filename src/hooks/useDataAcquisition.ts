@@ -37,7 +37,7 @@ export const useDataAcquisition = () => {
       console.error('Import error:', error);
       toast({
         title: "Import feilet",
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Ukjent feil',
         variant: "destructive"
       });
       return null;
