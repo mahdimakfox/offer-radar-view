@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Menu, X, Settings } from 'lucide-react';
+import { Menu, X, LogIn } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface NavigationProps {
@@ -60,10 +60,10 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
               </button>
             ))}
             
-            <Link to="/admin">
+            <Link to="/login">
               <Button variant="outline" size="sm" className="flex items-center space-x-2">
-                <Settings className="h-4 w-4" />
-                <span>Admin</span>
+                <LogIn className="h-4 w-4" />
+                <span>Logg inn</span>
               </Button>
             </Link>
           </div>
@@ -99,10 +99,10 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
                 </button>
               ))}
               
-              <Link to="/admin" className="block">
+              <Link to="/login" className="block">
                 <Button variant="outline" size="sm" className="w-full justify-start space-x-2">
-                  <Settings className="h-4 w-4" />
-                  <span>Admin</span>
+                  <LogIn className="h-4 w-4" />
+                  <span>Logg inn</span>
                 </Button>
               </Link>
             </div>
