@@ -2,11 +2,12 @@
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Provider } from '@/services/providerService';
-import { useProviders, useProviderSelectors } from '@/hooks/useProviders';
+import { useGlobalProviderState } from '@/hooks/useGlobalProviderState';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 import EmptyState from '@/components/common/EmptyState';
 import ProviderCard from './ProviderCard';
+import ProviderGridHeader from './ProviderGridHeader';
 
 interface ProviderGridProps {
   category: string;
@@ -16,49 +17,69 @@ interface ProviderGridProps {
 }
 
 const ProviderGrid = ({ category, searchTerm, onSelect, selectedProviders }: ProviderGridProps) => {
-  const [sortBy, setSortBy] = useState('price');
+  const [sortBy, setSortBy] = useState<'price' | 'rating' | 'name'>('price');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
-  const { providers, count, loading, error, refetch, isStale } = useProviders({ 
+  const {
+    providers,
+    providersLoading,
+    providersError,
+    isRefetching,
+    refetchProviders,
+    totalCount,
+    prefetchCategory,
+  } = useGlobalProviderState({ 
     category, 
-    searchTerm 
+    searchTerm,
+    sortBy,
+    sortOrder,
   });
-  
-  const { sortedByPrice, sortedByRating, sortedByName } = useProviderSelectors(providers);
 
-  const getSortedProviders = () => {
-    switch (sortBy) {
-      case 'price': return sortedByPrice;
-      case 'rating': return sortedByRating;
-      case 'name': return sortedByName;
-      default: return providers;
+  const handleSortChange = (newSortBy: 'price' | 'rating' | 'name') => {
+    if (newSortBy === sortBy) {
+      // Toggle sort order if same field
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder(newSortBy === 'rating' ? 'desc' : 'asc'); // Default to desc for rating
     }
   };
 
-  const sortedProviders = getSortedProviders();
+  const handleProviderHover = (providerId: number) => {
+    // Prefetch provider details for better UX
+    // This is handled by the ProviderCard component now
+  };
 
-  if (loading) {
+  const handleCategoryHover = (categoryId: string) => {
+    prefetchCategory(categoryId);
+  };
+
+  if (providersLoading) {
     return <LoadingState message="Henter leverandører..." count={6} />;
   }
 
-  if (error) {
+  if (providersError) {
     return (
       <ErrorState 
-        error={error}
-        onRetry={refetch}
+        error={providersError}
+        onRetry={refetchProviders}
         variant="full"
         title="Feil ved lasting av leverandører"
       />
     );
   }
 
-  if (sortedProviders.length === 0) {
+  if (providers.length === 0) {
     return (
       <EmptyState
         title="Ingen leverandører funnet"
-        description="Prøv å endre søkekriteriene eller velg en annen kategori."
+        description={searchTerm 
+          ? `Ingen leverandører funnet for "${searchTerm}" i kategorien ${category}.`
+          : "Prøv å endre søkekriteriene eller velg en annen kategori."
+        }
         action={{
-          label: 'Tilbakestill søk',
-          onClick: () => window.location.reload(),
+          label: searchTerm ? 'Tilbakestill søk' : 'Last inn på nytt',
+          onClick: searchTerm ? () => window.location.reload() : refetchProviders,
         }}
       />
     );
@@ -66,32 +87,16 @@ const ProviderGrid = ({ category, searchTerm, onSelect, selectedProviders }: Pro
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-3xl font-bold text-gray-900">
-            {count} leverandører funnet
-          </h2>
-          {isStale && (
-            <Badge variant="secondary" className="text-xs">
-              Oppdaterer...
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center space-x-4">
-          <select 
-            value={sortBy} 
-            onChange={(e) => setSortBy(e.target.value)}
-            className="border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="price">Sorter etter pris</option>
-            <option value="rating">Sorter etter rating</option>
-            <option value="name">Sorter etter navn</option>
-          </select>
-        </div>
-      </div>
+      <ProviderGridHeader
+        count={totalCount}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSortChange={handleSortChange}
+        isRefetching={isRefetching}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {sortedProviders.map((provider) => (
+        {providers.map((provider) => (
           <ProviderCard
             key={provider.id}
             provider={provider}

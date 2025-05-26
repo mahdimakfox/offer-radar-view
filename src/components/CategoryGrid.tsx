@@ -1,7 +1,7 @@
 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useCategoryCounts, useProviderActions } from '@/hooks/useProviders';
+import { useProviderCounts, useProviderCacheActions } from '@/hooks/useGlobalProviderState';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 
@@ -56,12 +56,16 @@ interface CategoryGridProps {
 }
 
 const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps) => {
-  const { counts, loading, error, refetch } = useCategoryCounts();
-  const { prefetchCategory } = useProviderActions();
+  const { counts, loading, error, refetch } = useProviderCounts();
+  const { prefetchProvider } = useProviderCacheActions();
 
   const handleCategoryHover = (categoryId: string) => {
-    // Prefetch data for better UX
-    prefetchCategory(categoryId);
+    // Could prefetch category data here if needed
+    // This is now handled by the global state management
+  };
+
+  const handleCategoryClick = (categoryId: string) => {
+    onCategoryChange(categoryId);
   };
 
   if (error) {
@@ -87,7 +91,7 @@ const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps)
               ? 'bg-white border-2 border-blue-500 shadow-xl scale-105'
               : 'bg-white hover:bg-gray-50 border border-gray-200 hover:border-blue-300'
           }`}
-          onClick={() => onCategoryChange(category.id)}
+          onClick={() => handleCategoryClick(category.id)}
           onMouseEnter={() => handleCategoryHover(category.id)}
         >
           {/* Background Gradient */}
@@ -121,7 +125,10 @@ const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps)
               }`}
             >
               {loading ? (
-                <LoadingState variant="inline" message="" />
+                <div className="flex items-center space-x-1">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b border-current"></div>
+                  <span>Laster...</span>
+                </div>
               ) : (
                 `${counts[category.id] || 0} leverandører`
               )}

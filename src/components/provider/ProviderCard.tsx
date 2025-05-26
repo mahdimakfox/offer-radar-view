@@ -2,7 +2,7 @@
 import { Card } from '@/components/ui/card';
 import { Provider } from '@/services/providerService';
 import { useNavigate } from 'react-router-dom';
-import { useProviderActions } from '@/hooks/useProviders';
+import { useProviderCacheActions } from '@/hooks/useGlobalProviderState';
 import ProviderCardHeader from './ProviderCardHeader';
 import ProviderCardPricing from './ProviderCardPricing';
 import ProviderCardFeatures from './ProviderCardFeatures';
@@ -16,7 +16,7 @@ interface ProviderCardProps {
 
 const ProviderCard = ({ provider, onSelect, selectedProviders }: ProviderCardProps) => {
   const navigate = useNavigate();
-  const { prefetchProvider } = useProviderActions();
+  const { prefetchProvider } = useProviderCacheActions();
 
   const isSelected = selectedProviders.find(p => p.id === provider.id);
 
@@ -25,7 +25,7 @@ const ProviderCard = ({ provider, onSelect, selectedProviders }: ProviderCardPro
   };
 
   const handleProviderHover = (providerId: number) => {
-    // Prefetch provider details for better UX
+    // Prefetch provider details for better UX using global cache management
     prefetchProvider(providerId);
   };
 
