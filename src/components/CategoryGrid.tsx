@@ -1,7 +1,9 @@
 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useCategoryProviderCounts } from '@/hooks/useProviderData';
+import { useCategoryCounts, useProviderActions } from '@/hooks/useProviders';
+import LoadingState from '@/components/common/LoadingState';
+import ErrorState from '@/components/common/ErrorState';
 
 const categories = [
   {
@@ -54,7 +56,26 @@ interface CategoryGridProps {
 }
 
 const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps) => {
-  const { counts, loading } = useCategoryProviderCounts();
+  const { counts, loading, error, refetch } = useCategoryCounts();
+  const { prefetchCategory } = useProviderActions();
+
+  const handleCategoryHover = (categoryId: string) => {
+    // Prefetch data for better UX
+    prefetchCategory(categoryId);
+  };
+
+  if (error) {
+    return (
+      <div className="mb-16">
+        <ErrorState 
+          error={error}
+          onRetry={refetch}
+          variant="inline"
+          title="Feil ved lasting av kategorier"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-16">
@@ -67,6 +88,7 @@ const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps)
               : 'bg-white hover:bg-gray-50 border border-gray-200 hover:border-blue-300'
           }`}
           onClick={() => onCategoryChange(category.id)}
+          onMouseEnter={() => handleCategoryHover(category.id)}
         >
           {/* Background Gradient */}
           <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-5 group-hover:opacity-10 transition-opacity`}></div>
@@ -98,7 +120,11 @@ const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps)
                   : 'bg-gray-100 text-gray-700 group-hover:bg-blue-100 group-hover:text-blue-700'
               }`}
             >
-              {loading ? '...' : (counts[category.id] || 0)} leverandører
+              {loading ? (
+                <LoadingState variant="inline" message="" />
+              ) : (
+                `${counts[category.id] || 0} leverandører`
+              )}
             </Badge>
             
             {/* Selection Indicator */}

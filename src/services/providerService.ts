@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
+import { validateProviderArray, sanitizeProvider, logDataInconsistency } from '@/utils/dataValidation';
 
 export interface Provider {
   id: number;
@@ -23,82 +24,130 @@ export interface Provider {
 // Use the Supabase generated type for providers table
 type ProviderRow = Tables<'providers'>;
 
+const transformProviderRow = (row: ProviderRow): Provider | null => {
+  return sanitizeProvider({
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    price: Number(row.price),
+    logo_url: row.logo_url || undefined,
+    rating: Number(row.rating),
+    description: row.description,
+    external_url: row.external_url,
+    pros: row.pros || undefined,
+    cons: row.cons || undefined,
+    org_number: row.org_number || undefined,
+    industry_code: row.industry_code || undefined,
+    ehf_invoice_support: row.ehf_invoice_support || false,
+    created_at: row.created_at || undefined,
+    updated_at: row.updated_at || undefined,
+  });
+};
+
 export const providerService = {
   async getProvidersByCategory(category: string): Promise<Provider[]> {
     try {
+      if (!category || typeof category !== 'string') {
+        throw new Error('Invalid category parameter');
+      }
+
       const { data, error } = await supabase
         .from('providers')
         .select('*')
-        .eq('category', category)
+        .eq('category', category.toLowerCase())
         .order('rating', { ascending: false });
 
       if (error) {
-        console.error('Error fetching providers:', error);
+        logDataInconsistency('getProvidersByCategory', { category, error: error.message });
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      if (!data) {
         return [];
       }
 
-      return (data || []).map((row: ProviderRow) => ({
-        id: row.id,
-        name: row.name,
-        category: row.category,
-        price: Number(row.price),
-        logo_url: row.logo_url || undefined,
-        rating: Number(row.rating),
-        description: row.description,
-        external_url: row.external_url,
-        pros: row.pros || undefined,
-        cons: row.cons || undefined,
-        org_number: row.org_number || undefined,
-        industry_code: row.industry_code || undefined,
-        ehf_invoice_support: row.ehf_invoice_support || false,
-        created_at: row.created_at || undefined,
-        updated_at: row.updated_at || undefined,
-      }));
+      // Validate and transform data
+      const transformedProviders = data
+        .map(row => transformProviderRow(row))
+        .filter((provider): provider is Provider => provider !== null);
+
+      const validation = validateProviderArray(transformedProviders);
+      if (!validation.isValid) {
+        logDataInconsistency('getProvidersByCategory_validation', { 
+          category, 
+          errors: validation.errors,
+          originalCount: data.length,
+          validCount: transformedProviders.length
+        });
+      }
+
+      return transformedProviders;
     } catch (error) {
-      console.error('Service error:', error);
-      return [];
+      logDataInconsistency('getProvidersByCategory_exception', { category }, error as Error);
+      throw error;
     }
   },
 
   async searchProviders(category: string, searchTerm: string): Promise<Provider[]> {
     try {
+      if (!category || typeof category !== 'string') {
+        throw new Error('Invalid category parameter');
+      }
+
+      if (!searchTerm || typeof searchTerm !== 'string') {
+        throw new Error('Invalid search term parameter');
+      }
+
+      const trimmedSearchTerm = searchTerm.trim();
+      if (trimmedSearchTerm.length === 0) {
+        return this.getProvidersByCategory(category);
+      }
+
       const { data, error } = await supabase
         .from('providers')
         .select('*')
-        .eq('category', category)
-        .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,org_number.ilike.%${searchTerm}%`)
+        .eq('category', category.toLowerCase())
+        .or(`name.ilike.%${trimmedSearchTerm}%,description.ilike.%${trimmedSearchTerm}%,org_number.ilike.%${trimmedSearchTerm}%`)
         .order('rating', { ascending: false });
 
       if (error) {
-        console.error('Error searching providers:', error);
+        logDataInconsistency('searchProviders', { category, searchTerm: trimmedSearchTerm, error: error.message });
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      if (!data) {
         return [];
       }
 
-      return (data || []).map((row: ProviderRow) => ({
-        id: row.id,
-        name: row.name,
-        category: row.category,
-        price: Number(row.price),
-        logo_url: row.logo_url || undefined,
-        rating: Number(row.rating),
-        description: row.description,
-        external_url: row.external_url,
-        pros: row.pros || undefined,
-        cons: row.cons || undefined,
-        org_number: row.org_number || undefined,
-        industry_code: row.industry_code || undefined,
-        ehf_invoice_support: row.ehf_invoice_support || false,
-        created_at: row.created_at || undefined,
-        updated_at: row.updated_at || undefined,
-      }));
+      // Validate and transform data
+      const transformedProviders = data
+        .map(row => transformProviderRow(row))
+        .filter((provider): provider is Provider => provider !== null);
+
+      const validation = validateProviderArray(transformedProviders);
+      if (!validation.isValid) {
+        logDataInconsistency('searchProviders_validation', { 
+          category, 
+          searchTerm: trimmedSearchTerm,
+          errors: validation.errors,
+          originalCount: data.length,
+          validCount: transformedProviders.length
+        });
+      }
+
+      return transformedProviders;
     } catch (error) {
-      console.error('Service error:', error);
-      return [];
+      logDataInconsistency('searchProviders_exception', { category, searchTerm }, error as Error);
+      throw error;
     }
   },
 
   async getProviderById(id: number): Promise<Provider | null> {
     try {
+      if (!id || typeof id !== 'number' || id <= 0) {
+        throw new Error('Invalid provider ID parameter');
+      }
+
       const { data, error } = await supabase
         .from('providers')
         .select('*')
@@ -106,32 +155,27 @@ export const providerService = {
         .single();
 
       if (error) {
-        console.error('Error fetching provider:', error);
+        if (error.code === 'PGRST116') {
+          // No rows returned
+          return null;
+        }
+        logDataInconsistency('getProviderById', { id, error: error.message });
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      if (!data) {
         return null;
       }
 
-      if (!data) return null;
+      const transformedProvider = transformProviderRow(data);
+      if (!transformedProvider) {
+        logDataInconsistency('getProviderById_invalid', { id, data });
+      }
 
-      return {
-        id: data.id,
-        name: data.name,
-        category: data.category,
-        price: Number(data.price),
-        logo_url: data.logo_url || undefined,
-        rating: Number(data.rating),
-        description: data.description,
-        external_url: data.external_url,
-        pros: data.pros || undefined,
-        cons: data.cons || undefined,
-        org_number: data.org_number || undefined,
-        industry_code: data.industry_code || undefined,
-        ehf_invoice_support: data.ehf_invoice_support || false,
-        created_at: data.created_at || undefined,
-        updated_at: data.updated_at || undefined,
-      };
+      return transformedProvider;
     } catch (error) {
-      console.error('Service error:', error);
-      return null;
+      logDataInconsistency('getProviderById_exception', { id }, error as Error);
+      throw error;
     }
   }
 };

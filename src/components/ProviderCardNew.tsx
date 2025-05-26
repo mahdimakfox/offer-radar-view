@@ -4,9 +4,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Provider } from '@/services/providerService';
-import { useProviderData } from '@/hooks/useProviderData';
+import { useProviders, useProviderSelectors, useProviderActions } from '@/hooks/useProviders';
 import { useNavigate } from 'react-router-dom';
-import { Star, ExternalLink, Plus, Check, Search } from 'lucide-react';
+import { Star, ExternalLink, Plus, Check } from 'lucide-react';
+import LoadingState from '@/components/common/LoadingState';
+import ErrorState from '@/components/common/ErrorState';
+import EmptyState from '@/components/common/EmptyState';
 
 interface ProviderCardNewProps {
   category: string;
@@ -19,13 +22,24 @@ const ProviderCardNew = ({ category, searchTerm, onSelect, selectedProviders }: 
   const [sortBy, setSortBy] = useState('price');
   const navigate = useNavigate();
   
-  const { providers, count, loading, error } = useProviderData(category, searchTerm);
-
-  const sortedProviders = [...providers].sort((a, b) => {
-    if (sortBy === 'price') return a.price - b.price;
-    if (sortBy === 'rating') return b.rating - a.rating;
-    return a.name.localeCompare(b.name);
+  const { providers, count, loading, error, refetch, isStale } = useProviders({ 
+    category, 
+    searchTerm 
   });
+  
+  const { sortedByPrice, sortedByRating, sortedByName } = useProviderSelectors(providers);
+  const { prefetchProvider } = useProviderActions();
+
+  const getSortedProviders = () => {
+    switch (sortBy) {
+      case 'price': return sortedByPrice;
+      case 'rating': return sortedByRating;
+      case 'name': return sortedByName;
+      default: return providers;
+    }
+  };
+
+  const sortedProviders = getSortedProviders();
 
   const formatPrice = (price: number, category: string) => {
     if (category === 'bank') return 'Gratis';
@@ -34,6 +48,11 @@ const ProviderCardNew = ({ category, searchTerm, onSelect, selectedProviders }: 
 
   const handleViewDetails = (providerId: number) => {
     navigate(`/provider/${providerId}`);
+  };
+
+  const handleProviderHover = (providerId: number) => {
+    // Prefetch provider details for better UX
+    prefetchProvider(providerId);
   };
 
   const renderStars = (rating: number) => {
@@ -55,31 +74,46 @@ const ProviderCardNew = ({ category, searchTerm, onSelect, selectedProviders }: 
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingState message="Henter leverandører..." count={6} />;
   }
 
   if (error) {
     return (
-      <div className="text-center py-16">
-        <div className="w-24 h-24 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4">
-          <Search className="h-12 w-12 text-red-400" />
-        </div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Feil ved lasting</h3>
-        <p className="text-red-500">{error}</p>
-      </div>
+      <ErrorState 
+        error={error}
+        onRetry={refetch}
+        variant="full"
+        title="Feil ved lasting av leverandører"
+      />
+    );
+  }
+
+  if (sortedProviders.length === 0) {
+    return (
+      <EmptyState
+        title="Ingen leverandører funnet"
+        description="Prøv å endre søkekriteriene eller velg en annen kategori."
+        action={{
+          label: 'Tilbakestill søk',
+          onClick: () => window.location.reload(),
+        }}
+      />
     );
   }
 
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">
-          {count} leverandører funnet
-        </h2>
+        <div className="flex items-center space-x-4">
+          <h2 className="text-3xl font-bold text-gray-900">
+            {count} leverandører funnet
+          </h2>
+          {isStale && (
+            <Badge variant="secondary" className="text-xs">
+              Oppdaterer...
+            </Badge>
+          )}
+        </div>
         <div className="flex items-center space-x-4">
           <select 
             value={sortBy} 
@@ -101,6 +135,7 @@ const ProviderCardNew = ({ category, searchTerm, onSelect, selectedProviders }: 
             <Card 
               key={provider.id} 
               className="group relative overflow-hidden bg-white border-2 border-gray-100 hover:border-blue-300 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
+              onMouseEnter={() => handleProviderHover(provider.id)}
             >
               <div className="p-6">
                 {/* Header */}
@@ -202,16 +237,6 @@ const ProviderCardNew = ({ category, searchTerm, onSelect, selectedProviders }: 
           );
         })}
       </div>
-
-      {sortedProviders.length === 0 && !loading && (
-        <div className="text-center py-16">
-          <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-            <Search className="h-12 w-12 text-gray-400" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Ingen leverandører funnet</h3>
-          <p className="text-gray-500">Prøv å endre søkekriteriene eller velg en annen kategori.</p>
-        </div>
-      )}
     </div>
   );
 };
