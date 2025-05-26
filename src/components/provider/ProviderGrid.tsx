@@ -1,11 +1,11 @@
 
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Provider } from '@/services/providerService';
-import { useGlobalProviderState } from '@/hooks/useGlobalProviderState';
+import { useProviderDataFetch } from '@/hooks/useProviderDataFetch';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 import EmptyState from '@/components/common/EmptyState';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 import ProviderCard from './ProviderCard';
 import ProviderGridHeader from './ProviderGridHeader';
 
@@ -22,13 +22,14 @@ const ProviderGrid = ({ category, searchTerm, onSelect, selectedProviders }: Pro
   
   const {
     providers,
-    providersLoading,
-    providersError,
-    isRefetching,
-    refetchProviders,
-    totalCount,
-    prefetchCategory,
-  } = useGlobalProviderState({ 
+    loading,
+    error,
+    retryCount,
+    hasData,
+    isEmpty,
+    refetch,
+    retryFetch,
+  } = useProviderDataFetch({ 
     category, 
     searchTerm,
     sortBy,
@@ -45,31 +46,30 @@ const ProviderGrid = ({ category, searchTerm, onSelect, selectedProviders }: Pro
     }
   };
 
-  const handleProviderHover = (providerId: number) => {
-    // Prefetch provider details for better UX
-    // This is handled by the ProviderCard component now
-  };
-
-  const handleCategoryHover = (categoryId: string) => {
-    prefetchCategory(categoryId);
-  };
-
-  if (providersLoading) {
+  // Show loading state
+  if (loading) {
     return <LoadingState message="Henter leverandører..." count={6} />;
   }
 
-  if (providersError) {
+  // Show error state with retry options
+  if (error) {
     return (
       <ErrorState 
-        error={providersError}
-        onRetry={refetchProviders}
+        error={error}
+        onRetry={retryCount < 3 ? retryFetch : refetch}
         variant="full"
         title="Feil ved lasting av leverandører"
+        description={
+          retryCount >= 3 
+            ? "Maksimalt antall forsøk er nådd. Vennligst prøv igjen senere."
+            : "Det oppstod en feil ved lasting av data. Vi prøver å laste på nytt automatisk."
+        }
       />
     );
   }
 
-  if (providers.length === 0) {
+  // Show empty state
+  if (isEmpty) {
     return (
       <EmptyState
         title="Ingen leverandører funnet"
@@ -79,33 +79,36 @@ const ProviderGrid = ({ category, searchTerm, onSelect, selectedProviders }: Pro
         }
         action={{
           label: searchTerm ? 'Tilbakestill søk' : 'Last inn på nytt',
-          onClick: searchTerm ? () => window.location.reload() : refetchProviders,
+          onClick: searchTerm ? () => window.location.reload() : refetch,
         }}
       />
     );
   }
 
   return (
-    <div>
-      <ProviderGridHeader
-        count={totalCount}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSortChange={handleSortChange}
-        isRefetching={isRefetching}
-      />
+    <ErrorBoundary>
+      <div>
+        <ProviderGridHeader
+          count={providers.length}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSortChange}
+          isRefetching={false}
+        />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {providers.map((provider) => (
-          <ProviderCard
-            key={provider.id}
-            provider={provider}
-            onSelect={onSelect}
-            selectedProviders={selectedProviders}
-          />
-        ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {providers.map((provider) => (
+            <ErrorBoundary key={provider.id}>
+              <ProviderCard
+                provider={provider}
+                onSelect={onSelect}
+                selectedProviders={selectedProviders}
+              />
+            </ErrorBoundary>
+          ))}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 };
 
