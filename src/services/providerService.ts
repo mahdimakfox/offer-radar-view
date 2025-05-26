@@ -19,7 +19,7 @@ export interface Provider {
 export const providerService = {
   async getProvidersByCategory(category: string): Promise<Provider[]> {
     const { data, error } = await supabase
-      .from('providers')
+      .from('providers' as any)
       .select('*')
       .eq('category', category)
       .order('rating', { ascending: false });
@@ -29,12 +29,12 @@ export const providerService = {
       return [];
     }
 
-    return data || [];
+    return (data || []) as Provider[];
   },
 
   async searchProviders(category: string, searchTerm: string): Promise<Provider[]> {
     const { data, error } = await supabase
-      .from('providers')
+      .from('providers' as any)
       .select('*')
       .eq('category', category)
       .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
@@ -45,12 +45,12 @@ export const providerService = {
       return [];
     }
 
-    return data || [];
+    return (data || []) as Provider[];
   },
 
   async getProviderById(id: number): Promise<Provider | null> {
     const { data, error } = await supabase
-      .from('providers')
+      .from('providers' as any)
       .select('*')
       .eq('id', id)
       .single();
@@ -60,6 +60,6 @@ export const providerService = {
       return null;
     }
 
-    return data;
+    return data as Provider;
   }
 };

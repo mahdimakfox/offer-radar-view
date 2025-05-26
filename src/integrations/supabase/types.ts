@@ -57,6 +57,51 @@ export type Database = {
         }
         Relationships: []
       }
+      providers: {
+        Row: {
+          category: string
+          cons: string[] | null
+          created_at: string | null
+          description: string
+          external_url: string
+          id: number
+          logo_url: string | null
+          name: string
+          price: number
+          pros: string[] | null
+          rating: number
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          cons?: string[] | null
+          created_at?: string | null
+          description: string
+          external_url: string
+          id?: number
+          logo_url?: string | null
+          name: string
+          price?: number
+          pros?: string[] | null
+          rating?: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          cons?: string[] | null
+          created_at?: string | null
+          description?: string
+          external_url?: string
+          id?: number
+          logo_url?: string | null
+          name?: string
+          price?: number
+          pros?: string[] | null
+          rating?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
