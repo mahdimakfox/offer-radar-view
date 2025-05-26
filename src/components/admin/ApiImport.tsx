@@ -219,7 +219,11 @@ const ApiImport = () => {
         ))}
       </div>
 
-      {// ... keep existing code (empty state and results display sections)}
+      {apiMappings.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-gray-500">Ingen API-mappings funnet</p>
+        </div>
+      )}
     </div>
   );
 };
