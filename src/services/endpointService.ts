@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { realApiService, RealApiProvider } from './realApiService';
 
@@ -18,6 +17,27 @@ interface ProviderEndpoint {
   failure_count: number;
   total_requests: number;
   success_rate: number;
+}
+
+// Database response type that matches Supabase's actual return type
+interface DatabaseEndpoint {
+  id: string;
+  category: string;
+  name: string;
+  endpoint_type: string;
+  url: string;
+  priority: number;
+  is_active: boolean;
+  auth_required: boolean;
+  auth_config?: any;
+  scraping_config?: any;
+  last_success_at?: string;
+  last_failure_at?: string;
+  failure_count: number;
+  total_requests: number;
+  success_rate: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ExecutionResult {
@@ -288,7 +308,11 @@ export const endpointService = {
       throw error;
     }
 
-    return data || [];
+    // Convert database response to ProviderEndpoint type
+    return (data as DatabaseEndpoint[]).map(endpoint => ({
+      ...endpoint,
+      endpoint_type: endpoint.endpoint_type as 'api' | 'scraping'
+    }));
   },
 
   async executeEndpoint(endpointId: string, executionType: 'manual' | 'scheduled' | 'fallback' = 'manual'): Promise<ExecutionResult> {
@@ -306,7 +330,13 @@ export const endpointService = {
       throw new Error('Endpoint is not active');
     }
 
-    return executeEndpoint(endpoint, executionType);
+    // Convert database response to ProviderEndpoint type
+    const typedEndpoint: ProviderEndpoint = {
+      ...endpoint,
+      endpoint_type: endpoint.endpoint_type as 'api' | 'scraping'
+    };
+
+    return executeEndpoint(typedEndpoint, executionType);
   },
 
   async executeWithFallback(category: string): Promise<ExecutionResult> {
