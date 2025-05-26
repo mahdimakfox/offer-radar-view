@@ -35,15 +35,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Global error handler for queries
-queryClient.setDefaultOptions({
-  queries: {
-    onError: (error) => {
-      logError('Query error', error);
-    },
-  },
-});
-
 interface DataProviderContextType {
   queryClient: QueryClient;
   logError: (context: string, error: unknown) => void;
