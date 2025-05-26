@@ -1,12 +1,75 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import CategoryGrid from '@/components/CategoryGrid';
+import ProviderCard from '@/components/ProviderCard';
+import ComparisonTable from '@/components/ComparisonTable';
+import Hero from '@/components/Hero';
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 
 const Index = () => {
+  const [selectedCategory, setSelectedCategory] = useState('strom');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProviders, setSelectedProviders] = useState([]);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <Navigation />
+      <Hero />
+      
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        {/* Category Selection */}
+        <CategoryGrid 
+          selectedCategory={selectedCategory} 
+          onCategoryChange={setSelectedCategory} 
+        />
+
+        {/* Search and Filters */}
+        <div className="my-12 max-w-2xl mx-auto">
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Søk etter leverandører eller tilbud..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-14 pl-4 pr-12 text-lg border-2 border-blue-200 focus:border-blue-500 rounded-lg shadow-sm"
+            />
+            <Button 
+              className="absolute right-2 top-2 h-10 bg-blue-600 hover:bg-blue-700"
+            >
+              Søk
+            </Button>
+          </div>
+        </div>
+
+        {/* Provider Grid */}
+        <ProviderCard 
+          category={selectedCategory}
+          searchTerm={searchTerm}
+          onSelect={(provider) => {
+            if (selectedProviders.length < 4 && !selectedProviders.find(p => p.id === provider.id)) {
+              setSelectedProviders([...selectedProviders, provider]);
+            }
+          }}
+          selectedProviders={selectedProviders}
+        />
+
+        {/* Comparison Section */}
+        {selectedProviders.length > 1 && (
+          <ComparisonTable 
+            providers={selectedProviders}
+            onRemove={(providerId) => {
+              setSelectedProviders(selectedProviders.filter(p => p.id !== providerId));
+            }}
+          />
+        )}
       </div>
+
+      <Footer />
     </div>
   );
 };
