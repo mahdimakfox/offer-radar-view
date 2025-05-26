@@ -1,8 +1,18 @@
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 
-const Navigation = () => {
+interface NavigationProps {
+  selectedCategory?: string;
+  onCategoryChange?: (category: string) => void;
+}
+
+const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => {
+  const handleCategoryClick = (category: string) => {
+    if (onCategoryChange) {
+      onCategoryChange(category);
+    }
+  };
+
   return (
     <nav className="bg-white shadow-lg border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4">
@@ -14,11 +24,46 @@ const Navigation = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-gray-700 hover:text-blue-600 font-medium">Strøm</a>
-            <a href="#" className="text-gray-700 hover:text-blue-600 font-medium">Forsikring</a>
-            <a href="#" className="text-gray-700 hover:text-blue-600 font-medium">Bank</a>
-            <a href="#" className="text-gray-700 hover:text-blue-600 font-medium">Mobil</a>
-            <a href="#" className="text-gray-700 hover:text-blue-600 font-medium">Bredbånd</a>
+            <button 
+              onClick={() => handleCategoryClick('strom')} 
+              className={`text-gray-700 hover:text-blue-600 font-medium transition-colors ${
+                selectedCategory === 'strom' ? 'text-blue-600 border-b-2 border-blue-600' : ''
+              }`}
+            >
+              Strøm
+            </button>
+            <button 
+              onClick={() => handleCategoryClick('forsikring')} 
+              className={`text-gray-700 hover:text-blue-600 font-medium transition-colors ${
+                selectedCategory === 'forsikring' ? 'text-blue-600 border-b-2 border-blue-600' : ''
+              }`}
+            >
+              Forsikring
+            </button>
+            <button 
+              onClick={() => handleCategoryClick('bank')} 
+              className={`text-gray-700 hover:text-blue-600 font-medium transition-colors ${
+                selectedCategory === 'bank' ? 'text-blue-600 border-b-2 border-blue-600' : ''
+              }`}
+            >
+              Bank
+            </button>
+            <button 
+              onClick={() => handleCategoryClick('mobil')} 
+              className={`text-gray-700 hover:text-blue-600 font-medium transition-colors ${
+                selectedCategory === 'mobil' ? 'text-blue-600 border-b-2 border-blue-600' : ''
+              }`}
+            >
+              Mobil
+            </button>
+            <button 
+              onClick={() => handleCategoryClick('bredband')} 
+              className={`text-gray-700 hover:text-blue-600 font-medium transition-colors ${
+                selectedCategory === 'bredband' ? 'text-blue-600 border-b-2 border-blue-600' : ''
+              }`}
+            >
+              Bredbånd
+            </button>
           </div>
 
           <div className="flex items-center space-x-4">

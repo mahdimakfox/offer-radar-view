@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import CategoryGrid from '@/components/CategoryGrid';
-import ProviderCard from '@/components/ProviderCard';
+import ProviderCardNew from '@/components/ProviderCardNew';
 import ComparisonTable from '@/components/ComparisonTable';
 import Hero from '@/components/Hero';
 import Navigation from '@/components/Navigation';
@@ -18,7 +18,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <Navigation />
+      <Navigation 
+        selectedCategory={selectedCategory} 
+        onCategoryChange={setSelectedCategory} 
+      />
       <Hero />
       
       <div className="max-w-7xl mx-auto px-4 py-16">
@@ -47,7 +50,7 @@ const Index = () => {
         </div>
 
         {/* Provider Grid */}
-        <ProviderCard 
+        <ProviderCardNew 
           category={selectedCategory}
           searchTerm={searchTerm}
           onSelect={(provider) => {
