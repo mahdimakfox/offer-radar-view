@@ -3,11 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface ApiMapping {
   id: string;
-  name: string;
-  url: string;
-  apiKey?: string;
-  headers?: Record<string, string>;
-  category: string;
+  provider_name: string;
+  api_url: string;
+  api_type?: string;
+  auth_required?: boolean;
+  data_mapping?: Record<string, any>;
 }
 
 export interface ImportResult {
@@ -20,38 +20,38 @@ export interface ImportResult {
 const mockApiMappings: ApiMapping[] = [
   {
     id: 'strom-api',
-    name: 'Norsk Strøm API',
-    url: 'https://api.strompriser.no/providers',
-    category: 'strom',
-    headers: { 'Content-Type': 'application/json' }
+    provider_name: 'Norsk Strøm API',
+    api_url: 'https://api.strompriser.no/providers',
+    api_type: 'REST',
+    auth_required: false
   },
   {
     id: 'forsikring-api', 
-    name: 'Forsikring Norge API',
-    url: 'https://api.forsikring.no/companies',
-    category: 'forsikring',
-    headers: { 'Content-Type': 'application/json' }
+    provider_name: 'Forsikring Norge API',
+    api_url: 'https://api.forsikring.no/companies',
+    api_type: 'REST',
+    auth_required: false
   },
   {
     id: 'bank-api',
-    name: 'Bank Norge API', 
-    url: 'https://api.bank.no/institutions',
-    category: 'bank',
-    headers: { 'Content-Type': 'application/json' }
+    provider_name: 'Bank Norge API', 
+    api_url: 'https://api.bank.no/institutions',
+    api_type: 'REST',
+    auth_required: true
   },
   {
     id: 'mobil-api',
-    name: 'Telecom Norge API',
-    url: 'https://api.telecom.no/operators',
-    category: 'mobil',
-    headers: { 'Content-Type': 'application/json' }
+    provider_name: 'Telecom Norge API',
+    api_url: 'https://api.telecom.no/operators',
+    api_type: 'REST',
+    auth_required: false
   },
   {
     id: 'internett-api',
-    name: 'Bredbånd Norge API',
-    url: 'https://api.bredband.no/providers',
-    category: 'internett',
-    headers: { 'Content-Type': 'application/json' }
+    provider_name: 'Bredbånd Norge API',
+    api_url: 'https://api.bredband.no/providers',
+    api_type: 'REST',
+    auth_required: false
   }
 ];
 
@@ -93,7 +93,7 @@ export const dataAcquisitionService = {
 
   async importProvidersFromApi(mapping: ApiMapping, category: string): Promise<ImportResult> {
     try {
-      console.log(`Importing from ${mapping.name} for category ${category}`);
+      console.log(`Importing from ${mapping.provider_name} for category ${category}`);
       
       // Get mock data for the category
       const categoryData = mockProviderData[category] || [];

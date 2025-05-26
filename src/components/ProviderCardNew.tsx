@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { providerService, Provider } from '@/services/providerService';
 import { useNavigate } from 'react-router-dom';
-import { Star, ExternalLink, Plus, Check } from 'lucide-react';
+import { Star, ExternalLink, Plus, Check, Search } from 'lucide-react';
 
 interface ProviderCardNewProps {
   category: string;
