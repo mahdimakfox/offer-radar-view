@@ -22,11 +22,11 @@ interface UseProviderDataFetchResult {
   isEmpty: boolean;
   refetch: () => void;
   retryFetch: () => void;
+  lastSuccessfulFetch: Date | null;
+  isRefetching: boolean;
 }
 
 export const useProviderDataFetch = (options: UseProviderDataFetchOptions): UseProviderDataFetchResult => {
-  const [retryCount, setRetryCount] = useState(0);
-  const [lastError, setLastError] = useState<Error | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -35,6 +35,12 @@ export const useProviderDataFetch = (options: UseProviderDataFetchOptions): UseP
     providersLoading,
     providersError,
     refetchProviders,
+    isRefetching,
+    hasData,
+    isEmpty,
+    isError,
+    lastSuccessfulFetch,
+    errorCount,
   } = useGlobalProviderState({
     category: options.category,
     searchTerm: options.searchTerm,
@@ -43,24 +49,8 @@ export const useProviderDataFetch = (options: UseProviderDataFetchOptions): UseP
     enabled: options.enabled !== false,
   });
 
-  // Handle error state changes
-  useEffect(() => {
-    if (providersError && providersError !== lastError) {
-      setLastError(providersError);
-      
-      // Show error toast only for new errors
-      if (retryCount < 3) {
-        toast({
-          title: "Feil ved lasting av data",
-          description: "Prøver å laste data på nytt...",
-          variant: "destructive",
-        });
-      }
-    }
-  }, [providersError, lastError, retryCount, toast]);
-
   const retryFetch = useCallback(async () => {
-    if (retryCount >= 3) {
+    if (errorCount >= 3) {
       toast({
         title: "Maksimalt antall forsøk nådd",
         description: "Vennligst prøv igjen senere eller kontakt support.",
@@ -69,11 +59,8 @@ export const useProviderDataFetch = (options: UseProviderDataFetchOptions): UseP
       return;
     }
 
-    setRetryCount(prev => prev + 1);
-    
     try {
-      // Clear the error before retrying
-      setLastError(null);
+      console.log(`Manual retry attempt (${errorCount + 1}/3) for category: ${options.category}`);
       
       // Invalidate and refetch the data
       await queryClient.invalidateQueries({ 
@@ -87,31 +74,30 @@ export const useProviderDataFetch = (options: UseProviderDataFetchOptions): UseP
         description: "Dataene har blitt oppdatert.",
       });
     } catch (error) {
-      console.error('Retry failed:', error);
-      setLastError(error as Error);
+      console.error('Manual retry failed:', error);
+      toast({
+        title: "Kunne ikke laste data",
+        description: "Prøv igjen om litt eller kontakt support hvis problemet vedvarer.",
+        variant: "destructive",
+      });
     }
-  }, [retryCount, queryClient, options.category, refetchProviders, toast]);
+  }, [errorCount, queryClient, options.category, refetchProviders, toast]);
 
   const refetch = useCallback(() => {
-    setRetryCount(0);
-    setLastError(null);
+    console.log(`Refreshing data for category: ${options.category}`);
     refetchProviders();
-  }, [refetchProviders]);
-
-  // Reset retry count when category changes
-  useEffect(() => {
-    setRetryCount(0);
-    setLastError(null);
-  }, [options.category]);
+  }, [refetchProviders, options.category]);
 
   return {
     providers,
     loading: providersLoading,
-    error: providersError || lastError,
-    retryCount,
-    hasData: providers.length > 0,
-    isEmpty: !providersLoading && providers.length === 0,
+    error: providersError,
+    retryCount: errorCount,
+    hasData,
+    isEmpty,
     refetch,
     retryFetch,
+    lastSuccessfulFetch,
+    isRefetching,
   };
 };

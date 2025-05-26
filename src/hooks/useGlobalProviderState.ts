@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 export const useGlobalProviderState = (options: UseGlobalProviderStateOptions): ProviderStateResult => {
   const { category, searchTerm = '', sortBy = 'price', sortOrder = 'asc', enabled = true } = options;
   const [errorCount, setErrorCount] = useState(0);
+  const [lastSuccessfulFetch, setLastSuccessfulFetch] = useState<Date | null>(null);
   const { toast } = useToast();
 
   // Fetch providers for specific category with search
@@ -38,46 +39,75 @@ export const useGlobalProviderState = (options: UseGlobalProviderStateOptions): 
   // Get all providers from cache for global access
   const allProviders = useAllCachedProviders(providers);
 
-  // Handle errors with retry logic
+  // Handle successful data fetch
+  useEffect(() => {
+    if (providers.length > 0 && !providersError) {
+      setLastSuccessfulFetch(new Date());
+      setErrorCount(0);
+    }
+  }, [providers.length, providersError]);
+
+  // Enhanced error handling with smart retry logic
   useEffect(() => {
     if (providersError && errorCount < 2) {
       console.warn(`Provider fetch error (attempt ${errorCount + 1}):`, providersError);
       setErrorCount(prev => prev + 1);
       
-      // Auto-retry once after a delay
+      // Auto-retry with exponential backoff
+      const retryDelay = Math.min(1000 * Math.pow(2, errorCount), 5000);
       const timer = setTimeout(() => {
+        console.log(`Retrying data fetch after ${retryDelay}ms...`);
         refetchProviders();
-      }, 2000);
+      }, retryDelay);
       
       return () => clearTimeout(timer);
     } else if (providersError && errorCount >= 2) {
-      // Show error toast after multiple failures
+      // Show persistent error toast after multiple failures
       toast({
         title: "Lasting av data feilet",
-        description: "Prøv å oppdatere siden eller velg en annen kategori.",
+        description: `Kunne ikke laste leverandører for ${category}. Prøv å oppdatere siden eller velg en annen kategori.`,
         variant: "destructive",
       });
     }
-  }, [providersError, errorCount, refetchProviders, toast]);
+  }, [providersError, errorCount, refetchProviders, toast, category]);
 
-  // Reset error count when category changes successfully
-  useEffect(() => {
-    if (providers.length > 0) {
-      setErrorCount(0);
-    }
-  }, [providers.length]);
-
-  // Action functions
+  // Enhanced action functions with better error handling
   const refetchAll = useCallback(() => {
+    console.log('Refreshing all provider data...');
     setErrorCount(0);
-    refetchProviders();
-    refetchCounts();
-  }, [refetchProviders, refetchCounts]);
+    Promise.all([refetchProviders(), refetchCounts()])
+      .then(() => {
+        console.log('Successfully refreshed all data');
+        toast({
+          title: "Data oppdatert",
+          description: "Alle leverandørdata har blitt lastet på nytt.",
+        });
+      })
+      .catch((error) => {
+        console.error('Failed to refresh data:', error);
+        toast({
+          title: "Oppdatering feilet",
+          description: "Kunne ikke oppdatere alle data. Prøv igjen senere.",
+          variant: "destructive",
+        });
+      });
+  }, [refetchProviders, refetchCounts, toast]);
 
   const enhancedInvalidateCategory = useCallback((categoryToInvalidate: string) => {
+    console.log(`Invalidating cache for category: ${categoryToInvalidate}`);
     setErrorCount(0);
     invalidateCategory(categoryToInvalidate);
   }, [invalidateCategory]);
+
+  const enhancedPrefetchCategory = useCallback((categoryToPrefetch: string) => {
+    console.log(`Prefetching data for category: ${categoryToPrefetch}`);
+    prefetchCategory(categoryToPrefetch);
+  }, [prefetchCategory]);
+
+  // Calculate derived state
+  const hasData = sortedProviders.length > 0;
+  const isEmpty = !providersLoading && !isRefetching && sortedProviders.length === 0;
+  const isError = (errorCount >= 2 ? providersError : null) !== null;
 
   return {
     // Data
@@ -90,7 +120,7 @@ export const useGlobalProviderState = (options: UseGlobalProviderStateOptions): 
     countsLoading,
     isRefetching,
     
-    // Error states
+    // Error states  
     providersError: (errorCount >= 2 ? providersError : null) as Error | null,
     countsError: countsError as Error | null,
     
@@ -99,13 +129,20 @@ export const useGlobalProviderState = (options: UseGlobalProviderStateOptions): 
     refetchCounts,
     refetchAll,
     invalidateCategory: enhancedInvalidateCategory,
-    prefetchCategory,
+    prefetchCategory: enhancedPrefetchCategory,
     
     // Computed data
     sortedProviders,
     filteredProviders: sortedProviders,
     hasMoreData: false,
     totalCount: sortedProviders.length,
+
+    // Enhanced status indicators
+    hasData,
+    isEmpty,
+    isError,
+    lastSuccessfulFetch,
+    errorCount,
   };
 };
 

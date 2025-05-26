@@ -41,4 +41,11 @@ export interface ProviderStateResult {
   filteredProviders: Provider[];
   hasMoreData: boolean;
   totalCount: number;
+
+  // Enhanced status indicators
+  hasData: boolean;
+  isEmpty: boolean;
+  isError: boolean;
+  lastSuccessfulFetch: Date | null;
+  errorCount: number;
 }
