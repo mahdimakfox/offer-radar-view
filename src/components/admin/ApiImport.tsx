@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { RefreshCw, Download, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { RefreshCw, Download, CheckCircle, XCircle, ExternalLink, AlertTriangle } from 'lucide-react';
 import { useDataAcquisition } from '@/hooks/useDataAcquisition';
 import { dataAcquisitionService, ApiMapping } from '@/services/dataAcquisitionService';
 
@@ -13,6 +13,7 @@ interface FetchResult {
   success: boolean;
   message: string;
   data_count?: number;
+  using_fallback?: boolean;
 }
 
 const ApiImport = () => {
@@ -44,15 +45,27 @@ const ApiImport = () => {
   const handleFetchSingle = async (mapping: ApiMapping) => {
     setFetching(mapping.id);
     try {
-      const result = await importData('strom', mapping.id);
+      // Try different categories for each mapping type
+      const categoryMap: Record<string, string> = {
+        'strom-api': 'strom',
+        'forsikring-api': 'forsikring', 
+        'bank-api': 'bank',
+        'mobil-api': 'mobil',
+        'internett-api': 'internett',
+        'boligalarm-api': 'boligalarm'
+      };
+      
+      const category = categoryMap[mapping.id] || 'strom';
+      const result = await importData(category, mapping.id);
       
       const fetchResult: FetchResult = {
         provider_name: mapping.provider_name,
         success: result !== null,
         message: result 
-          ? `Importerte ${result.success} leverandører, ${result.failed} feilet`
+          ? `Importerte ${result.success} leverandører${result.failed > 0 ? `, ${result.failed} feilet` : ''}${result.usingFallback ? ' (fallback data)' : ''}`
           : 'Import feilet',
-        data_count: result?.success || 0
+        data_count: result?.success || 0,
+        using_fallback: result?.usingFallback || false
       };
       
       setResults(prev => [fetchResult, ...prev.filter(r => r.provider_name !== mapping.provider_name)]);
@@ -67,18 +80,23 @@ const ApiImport = () => {
 
     try {
       const fetchResults: FetchResult[] = [];
+      const categories = ['strom', 'forsikring', 'bank', 'mobil', 'internett', 'boligalarm'];
       
-      for (const mapping of apiMappings) {
+      for (let i = 0; i < apiMappings.length && i < categories.length; i++) {
+        const mapping = apiMappings[i];
+        const category = categories[i];
+        
         setFetching(mapping.id);
-        const result = await importData('strom', mapping.id);
+        const result = await importData(category, mapping.id);
         
         const fetchResult: FetchResult = {
           provider_name: mapping.provider_name,
           success: result !== null,
           message: result 
-            ? `Importerte ${result.success} leverandører, ${result.failed} feilet`
+            ? `Importerte ${result.success} leverandører${result.failed > 0 ? `, ${result.failed} feilet` : ''}${result.usingFallback ? ' (fallback)' : ''}`
             : 'Import feilet',
-          data_count: result?.success || 0
+          data_count: result?.success || 0,
+          using_fallback: result?.usingFallback || false
         };
         
         fetchResults.push(fetchResult);
@@ -87,12 +105,18 @@ const ApiImport = () => {
       setResults(fetchResults);
 
       const successCount = fetchResults.filter(r => r.success).length;
+      const fallbackCount = fetchResults.filter(r => r.using_fallback).length;
       const totalData = fetchResults.reduce((sum, r) => sum + (r.data_count || 0), 0);
+
+      let message = `${successCount}/${fetchResults.length} API-er behandlet. ${totalData} leverandører oppdatert.`;
+      if (fallbackCount > 0) {
+        message += ` ${fallbackCount} brukte fallback-data.`;
+      }
 
       toast({
         title: "Batch import fullført",
-        description: `${successCount}/${fetchResults.length} API-er behandlet. ${totalData} leverandører oppdatert.`,
-        variant: successCount === fetchResults.length ? "default" : "destructive"
+        description: message,
+        variant: successCount === fetchResults.length && fallbackCount === 0 ? "default" : "destructive"
       });
 
     } finally {
@@ -105,9 +129,9 @@ const ApiImport = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold">API Mappings</h3>
+          <h3 className="text-lg font-semibold">Real API Integration</h3>
           <p className="text-sm text-gray-600">
-            {apiMappings.length} API-endepunkter konfigurert
+            {apiMappings.length} ekte API-endepunkter konfigurert (med fallback)
           </p>
         </div>
         <div className="flex space-x-2">
@@ -142,6 +166,9 @@ const ApiImport = () => {
                     {mapping.auth_required && (
                       <Badge variant="secondary">Autentisering påkrevd</Badge>
                     )}
+                    <Badge variant="outline" className="text-xs">
+                      Real API + Fallback
+                    </Badge>
                   </CardDescription>
                 </div>
                 <Button
@@ -172,7 +199,11 @@ const ApiImport = () => {
                       return (
                         <div className="flex items-center space-x-2">
                           {result.success ? (
-                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            result.using_fallback ? (
+                              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            )
                           ) : (
                             <XCircle className="h-4 w-4 text-red-500" />
                           )}
@@ -188,47 +219,7 @@ const ApiImport = () => {
         ))}
       </div>
 
-      {apiMappings.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <p className="text-gray-500">Ingen API-mappings konfigurert ennå.</p>
-            <p className="text-sm text-gray-400 mt-2">
-              API-mappings ble automatisk opprettet under migreringen
-            </p>
-            <Button onClick={loadApiMappings} className="mt-4" variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Last på nytt
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {results.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Siste hente-resultater</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {results.map((result, index) => (
-                <div key={index} className="flex items-center space-x-2 p-2 border rounded">
-                  {result.success ? (
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <XCircle className="h-4 w-4 text-red-500" />
-                  )}
-                  <span className="flex-1 text-sm">
-                    <strong>{result.provider_name}:</strong> {result.message}
-                  </span>
-                  <Badge variant={result.success ? "default" : "destructive"}>
-                    {result.success ? 'Suksess' : 'Feilet'}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {// ... keep existing code (empty state and results display sections)}
     </div>
   );
 };

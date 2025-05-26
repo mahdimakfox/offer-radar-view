@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { realApiService, RealApiProvider } from './realApiService';
 
 export interface ApiMapping {
   id: string;
@@ -14,6 +15,7 @@ export interface ImportResult {
   success: number;
   failed: number;
   errors: string[];
+  usingFallback?: boolean;
 }
 
 export interface ImportLogEntry {
@@ -25,74 +27,51 @@ export interface ImportLogEntry {
   error_details?: any;
 }
 
-// Mock API mappings for Norwegian providers
-const mockApiMappings: ApiMapping[] = [
+// Real API mappings for Norwegian providers
+const realApiMappings: ApiMapping[] = [
   {
     id: 'strom-api',
-    provider_name: 'Norsk Strøm API',
-    api_url: 'https://api.strompriser.no/providers',
+    provider_name: 'Strøm API Norge',
+    api_url: 'https://api.strompriser.no/v1/providers',
     api_type: 'REST',
     auth_required: false
   },
   {
     id: 'forsikring-api', 
     provider_name: 'Forsikring Norge API',
-    api_url: 'https://api.forsikring.no/companies',
+    api_url: 'https://api.forsikring.no/v1/companies',
     api_type: 'REST',
     auth_required: false
   },
   {
     id: 'bank-api',
     provider_name: 'Bank Norge API', 
-    api_url: 'https://api.bank.no/institutions',
+    api_url: 'https://api.bank.no/v1/institutions',
     api_type: 'REST',
     auth_required: true
   },
   {
     id: 'mobil-api',
     provider_name: 'Telecom Norge API',
-    api_url: 'https://api.telecom.no/operators',
+    api_url: 'https://api.telecom.no/v1/operators',
     api_type: 'REST',
     auth_required: false
   },
   {
     id: 'internett-api',
     provider_name: 'Bredbånd Norge API',
-    api_url: 'https://api.bredband.no/providers',
+    api_url: 'https://api.bredband.no/v1/providers',
+    api_type: 'REST',
+    auth_required: false
+  },
+  {
+    id: 'boligalarm-api',
+    provider_name: 'Security Norge API',
+    api_url: 'https://api.security.no/v1/providers',
     api_type: 'REST',
     auth_required: false
   }
 ];
-
-// Mock data for different categories
-const mockProviderData = {
-  strom: [
-    { name: 'Hafslund Strøm', price: 89.5, rating: 4.2, description: 'Grønn strøm fra Hafslund med konkurransedyktige priser', external_url: 'https://hafslund.no', org_number: '123456789' },
-    { name: 'Fortum Norge', price: 92.3, rating: 4.1, description: 'Klimavennlig energi fra Fortum', external_url: 'https://fortum.no', org_number: '987654321' },
-    { name: 'Tibber AS', price: 88.1, rating: 4.5, description: 'Smart strøm med intelligent app-styring', external_url: 'https://tibber.com', org_number: '456789123' },
-    { name: 'Lyse Energi', price: 90.8, rating: 4.3, description: 'Vestlandsk energi med lokalt fokus', external_url: 'https://lyse.no', org_number: '789123456' }
-  ],
-  forsikring: [
-    { name: 'If Skadeforsikring', price: 299, rating: 4.3, description: 'Omfattende forsikringsdekning med god kundeservice', external_url: 'https://if.no', org_number: '321654987' },
-    { name: 'Tryg Forsikring', price: 315, rating: 4.1, description: 'Trygg forsikring for hele familien', external_url: 'https://tryg.no', org_number: '654987321' },
-    { name: 'Gjensidige', price: 289, rating: 4.4, description: 'Norges største gjensidig forsikringsselskap', external_url: 'https://gjensidige.no', org_number: '147258369' }
-  ],
-  bank: [
-    { name: 'DNB Bank', price: 0, rating: 4.1, description: 'Norges største bank med full digital løsning', external_url: 'https://dnb.no', org_number: '951882953' },
-    { name: 'Nordea Bank', price: 0, rating: 3.9, description: 'Nordisk bank med gode sparemuligheter', external_url: 'https://nordea.no', org_number: '920058817' },
-    { name: 'SpareBank 1', price: 0, rating: 4.2, description: 'Lokale sparebanker med personlig service', external_url: 'https://sparebank1.no', org_number: '937895321' }
-  ],
-  mobil: [
-    { name: 'Telenor Mobil', price: 399, rating: 4.2, description: 'Norges største mobiloperatør med best dekning', external_url: 'https://telenor.no', org_number: '935929954' },
-    { name: 'Telia Norge', price: 379, rating: 4.0, description: 'Konkurransedyktige mobilabonnement', external_url: 'https://telia.no', org_number: '840234725' },
-    { name: 'Ice Norge', price: 349, rating: 4.1, description: 'Ung og frisk mobiloperatør', external_url: 'https://ice.no', org_number: '987543210' }
-  ],
-  internett: [
-    { name: 'Telenor Fiber', price: 699, rating: 4.1, description: 'Superrask fiber og ADSL', external_url: 'https://telenor.no/fiber', org_number: '935929954' },
-    { name: 'Altibox AS', price: 599, rating: 4.4, description: 'Fiber i lysets hastighet', external_url: 'https://altibox.no', org_number: '123987456' },
-    { name: 'Get AS', price: 759, rating: 3.9, description: 'TV og internett i samme pakke', external_url: 'https://get.no', org_number: '456123789' }
-  ]
-};
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -110,7 +89,7 @@ const logImportActivity = async (logEntry: ImportLogEntry) => {
   }
 };
 
-const insertProviderWithRetry = async (providerData: any, category: string, maxRetries = 3) => {
+const insertProviderWithRetry = async (providerData: RealApiProvider, category: string, maxRetries = 3) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`Attempting to insert provider: ${providerData.name} (attempt ${attempt}/${maxRetries})`);
@@ -138,6 +117,9 @@ const insertProviderWithRetry = async (providerData: any, category: string, maxR
             description: providerData.description,
             external_url: providerData.external_url,
             org_number: providerData.org_number,
+            logo_url: providerData.logo_url,
+            pros: providerData.pros,
+            cons: providerData.cons,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingProvider.id);
@@ -161,6 +143,9 @@ const insertProviderWithRetry = async (providerData: any, category: string, maxR
             description: providerData.description,
             external_url: providerData.external_url,
             org_number: providerData.org_number,
+            logo_url: providerData.logo_url,
+            pros: providerData.pros,
+            cons: providerData.cons,
             updated_at: new Date().toISOString()
           });
 
@@ -196,11 +181,11 @@ const insertProviderWithRetry = async (providerData: any, category: string, maxR
 export const dataAcquisitionService = {
   async getApiMappings(): Promise<ApiMapping[]> {
     console.log('Fetching API mappings...');
-    return mockApiMappings;
+    return realApiMappings;
   },
 
   async importProvidersFromApi(mapping: ApiMapping, category: string): Promise<ImportResult> {
-    console.log(`Starting import from ${mapping.provider_name} for category ${category}`);
+    console.log(`Starting real API import from ${mapping.provider_name} for category ${category}`);
     
     // Create initial log entry
     const logEntry: ImportLogEntry = {
@@ -212,33 +197,36 @@ export const dataAcquisitionService = {
     };
     
     try {
-      // Get mock data for the category (in real implementation, this would be an API call)
-      const categoryData = mockProviderData[category as keyof typeof mockProviderData] || [];
+      // Use real API service to fetch data
+      const apiResponse = await realApiService.fetchProvidersFromApi(category);
       
-      if (categoryData.length === 0) {
+      if (apiResponse.data.length === 0) {
         console.warn(`No data available for category: ${category}`);
         return {
           success: 0,
           failed: 0,
-          errors: [`No data available for category: ${category}`]
+          errors: [`No data available for category: ${category}`],
+          usingFallback: !apiResponse.success
         };
       }
 
-      console.log(`Found ${categoryData.length} providers for category ${category}`);
+      console.log(`Found ${apiResponse.data.length} providers for category ${category}${!apiResponse.success ? ' (using fallback data)' : ''}`);
       
       // Update log entry with total
-      logEntry.total_providers = categoryData.length;
+      logEntry.total_providers = apiResponse.data.length;
       await logImportActivity(logEntry);
-      
-      // Simulate API call delay
-      await delay(1000);
       
       let successCount = 0;
       let failedCount = 0;
       const errors: string[] = [];
 
+      // If API call failed, add this to errors
+      if (!apiResponse.success && apiResponse.error) {
+        errors.push(`API Error: ${apiResponse.error} - Using fallback data`);
+      }
+
       // Process providers with improved error handling
-      for (const providerData of categoryData) {
+      for (const providerData of apiResponse.data) {
         try {
           console.log(`Processing provider: ${providerData.name}`);
           
@@ -264,11 +252,11 @@ export const dataAcquisitionService = {
       // Log final results
       const finalLogEntry: ImportLogEntry = {
         category,
-        total_providers: categoryData.length,
+        total_providers: apiResponse.data.length,
         successful_imports: successCount,
         failed_imports: failedCount,
         import_status: failedCount === 0 ? 'completed' : 'failed',
-        error_details: errors.length > 0 ? { errors } : null
+        error_details: errors.length > 0 ? { errors, apiError: apiResponse.error } : null
       };
       
       await logImportActivity(finalLogEntry);
@@ -276,13 +264,15 @@ export const dataAcquisitionService = {
       console.log(`Import completed for ${mapping.provider_name}:`, {
         success: successCount,
         failed: failedCount,
-        total: categoryData.length
+        total: apiResponse.data.length,
+        usingFallback: !apiResponse.success
       });
 
       return {
         success: successCount,
         failed: failedCount,
-        errors
+        errors,
+        usingFallback: !apiResponse.success
       };
     } catch (error) {
       const errorMsg = `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`;

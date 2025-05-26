@@ -14,7 +14,7 @@ export const useDataAcquisition = () => {
     setLoading(true);
     
     try {
-      console.log(`Starting import for category: ${category}, mapping: ${apiMappingId}`);
+      console.log(`Starting real API import for category: ${category}, mapping: ${apiMappingId}`);
       
       // Hent API-mappings
       const mappings = await dataAcquisitionService.getApiMappings();
@@ -32,7 +32,7 @@ export const useDataAcquisition = () => {
         throw new Error('Ingen API-mapping funnet');
       }
 
-      console.log(`Importing from ${targetMapping.provider_name} for category ${category}`);
+      console.log(`Importing from real API: ${targetMapping.provider_name} for category ${category}`);
       const results = await dataAcquisitionService.importProvidersFromApi(targetMapping, category);
       
       // Invalidate relevant queries to refresh data
@@ -43,12 +43,19 @@ export const useDataAcquisition = () => {
         queryKey: PROVIDER_QUERY_KEYS.counts() 
       });
       
-      const successMessage = `Importerte ${results.success} leverandører${results.failed > 0 ? `, ${results.failed} feilet` : ''}`;
+      // Enhanced success message with fallback indication
+      let successMessage = `Importerte ${results.success} leverandører`;
+      if (results.failed > 0) {
+        successMessage += `, ${results.failed} feilet`;
+      }
+      if (results.usingFallback) {
+        successMessage += ' (bruker fallback-data pga API-feil)';
+      }
       
       toast({
-        title: "Import fullført",
+        title: results.usingFallback ? "Import fullført med fallback" : "Import fullført",
         description: successMessage,
-        variant: results.failed === 0 ? "default" : "destructive"
+        variant: results.failed === 0 && !results.usingFallback ? "default" : "destructive"
       });
       
       // Log detailed results if there were errors
