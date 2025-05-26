@@ -157,8 +157,11 @@ export const useGlobalProviderState = (options: UseGlobalProviderStateOptions): 
     
     queryCache.getAll().forEach((query) => {
       if (query.queryKey[0] === 'providers' && query.state.data) {
-        const data = query.state.data as Provider[];
-        allCachedProviders.push(...data);
+        const data = query.state.data;
+        // Only spread if data is an array
+        if (Array.isArray(data)) {
+          allCachedProviders.push(...data);
+        }
       }
     });
     
