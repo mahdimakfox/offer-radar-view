@@ -33,6 +33,39 @@ export type Database = {
         }
         Relationships: []
       }
+      import_logs: {
+        Row: {
+          category: string
+          created_at: string | null
+          error_details: Json | null
+          failed_imports: number
+          id: string
+          import_status: string | null
+          successful_imports: number
+          total_providers: number
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          error_details?: Json | null
+          failed_imports: number
+          id?: string
+          import_status?: string | null
+          successful_imports: number
+          total_providers: number
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          error_details?: Json | null
+          failed_imports?: number
+          id?: string
+          import_status?: string | null
+          successful_imports?: number
+          total_providers?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -53,6 +86,39 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      provider_api_mappings: {
+        Row: {
+          api_type: string | null
+          api_url: string
+          auth_required: boolean | null
+          created_at: string | null
+          data_mapping: Json | null
+          id: string
+          provider_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          api_type?: string | null
+          api_url: string
+          auth_required?: boolean | null
+          created_at?: string | null
+          data_mapping?: Json | null
+          id?: string
+          provider_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          api_type?: string | null
+          api_url?: string
+          auth_required?: boolean | null
+          created_at?: string | null
+          data_mapping?: Json | null
+          id?: string
+          provider_name?: string
           updated_at?: string | null
         }
         Relationships: []
