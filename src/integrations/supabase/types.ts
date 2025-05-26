@@ -9,6 +9,56 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      endpoint_execution_logs: {
+        Row: {
+          created_at: string
+          duplicates_found: number | null
+          endpoint_id: string
+          error_message: string | null
+          execution_time_ms: number | null
+          execution_type: string
+          id: string
+          providers_fetched: number | null
+          providers_saved: number | null
+          response_metadata: Json | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          duplicates_found?: number | null
+          endpoint_id: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          execution_type: string
+          id?: string
+          providers_fetched?: number | null
+          providers_saved?: number | null
+          response_metadata?: Json | null
+          status: string
+        }
+        Update: {
+          created_at?: string
+          duplicates_found?: number | null
+          endpoint_id?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          execution_type?: string
+          id?: string
+          providers_fetched?: number | null
+          providers_saved?: number | null
+          response_metadata?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endpoint_execution_logs_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "provider_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           category: string
@@ -150,6 +200,98 @@ export type Database = {
           id?: string
           provider_name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      provider_duplicates: {
+        Row: {
+          content_hash: string
+          created_at: string
+          id: string
+          original_source: string | null
+          provider_id: number
+        }
+        Insert: {
+          content_hash: string
+          created_at?: string
+          id?: string
+          original_source?: string | null
+          provider_id: number
+        }
+        Update: {
+          content_hash?: string
+          created_at?: string
+          id?: string
+          original_source?: string | null
+          provider_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_duplicates_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_endpoints: {
+        Row: {
+          auth_config: Json | null
+          auth_required: boolean | null
+          category: string
+          created_at: string
+          endpoint_type: string
+          failure_count: number | null
+          id: string
+          is_active: boolean
+          last_failure_at: string | null
+          last_success_at: string | null
+          name: string
+          priority: number
+          scraping_config: Json | null
+          success_rate: number | null
+          total_requests: number | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          auth_config?: Json | null
+          auth_required?: boolean | null
+          category: string
+          created_at?: string
+          endpoint_type: string
+          failure_count?: number | null
+          id?: string
+          is_active?: boolean
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          name: string
+          priority?: number
+          scraping_config?: Json | null
+          success_rate?: number | null
+          total_requests?: number | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          auth_config?: Json | null
+          auth_required?: boolean | null
+          category?: string
+          created_at?: string
+          endpoint_type?: string
+          failure_count?: number | null
+          id?: string
+          is_active?: boolean
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          name?: string
+          priority?: number
+          scraping_config?: Json | null
+          success_rate?: number | null
+          total_requests?: number | null
+          updated_at?: string
+          url?: string
         }
         Relationships: []
       }

@@ -14,11 +14,11 @@ export const useDataAcquisition = () => {
     setLoading(true);
     
     try {
-      console.log(`Starting real API import for category: ${category}, mapping: ${apiMappingId}`);
+      console.log(`Starting enhanced data import for category: ${category}, mapping: ${apiMappingId}`);
       
-      // Hent API-mappings
+      // Hent API-mappings (now includes database endpoints)
       const mappings = await dataAcquisitionService.getApiMappings();
-      console.log(`Found ${mappings.length} API mappings`);
+      console.log(`Found ${mappings.length} API mappings/endpoints`);
       
       let targetMapping = mappings.find(m => m.id === apiMappingId);
       
@@ -32,7 +32,7 @@ export const useDataAcquisition = () => {
         throw new Error('Ingen API-mapping funnet');
       }
 
-      console.log(`Importing from real API: ${targetMapping.provider_name} for category ${category}`);
+      console.log(`Importing from endpoint: ${targetMapping.provider_name} for category ${category}`);
       const results = await dataAcquisitionService.importProvidersFromApi(targetMapping, category);
       
       // Invalidate relevant queries to refresh data
@@ -43,19 +43,24 @@ export const useDataAcquisition = () => {
         queryKey: PROVIDER_QUERY_KEYS.counts() 
       });
       
-      // Enhanced success message with fallback indication
+      // Enhanced success message with duplicate information
       let successMessage = `Importerte ${results.success} leverandører`;
       if (results.failed > 0) {
         successMessage += `, ${results.failed} feilet`;
+      }
+      if (results.duplicatesFound && results.duplicatesFound > 0) {
+        successMessage += `, ${results.duplicatesFound} duplikater funnet`;
       }
       if (results.usingFallback) {
         successMessage += ' (bruker fallback-data pga API-feil)';
       }
       
+      const hasIssues = results.failed > 0 || results.usingFallback;
+      
       toast({
-        title: results.usingFallback ? "Import fullført med fallback" : "Import fullført",
+        title: hasIssues ? "Import fullført med advarsler" : "Import fullført",
         description: successMessage,
-        variant: results.failed === 0 && !results.usingFallback ? "default" : "destructive"
+        variant: hasIssues ? "destructive" : "default"
       });
       
       // Log detailed results if there were errors

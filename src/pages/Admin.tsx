@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import FileImport from '@/components/admin/FileImport';
 import ApiImport from '@/components/admin/ApiImport';
 import ImportLogs from '@/components/admin/ImportLogs';
+import EndpointManagement from '@/components/admin/EndpointManagement';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
@@ -23,16 +24,31 @@ const Admin = () => {
             Admin Dashboard
           </h1>
           <p className="text-xl text-gray-600">
-            Manage provider data imports and API integrations
+            Manage provider data imports, API integrations, and endpoint configurations
           </p>
         </div>
 
-        <Tabs defaultValue="file-import" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="endpoints" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="endpoints">Endpoint Management</TabsTrigger>
             <TabsTrigger value="file-import">File Import</TabsTrigger>
             <TabsTrigger value="api-import">API Import</TabsTrigger>
             <TabsTrigger value="logs">Import Logs</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="endpoints">
+            <Card>
+              <CardHeader>
+                <CardTitle>Endpoint Management</CardTitle>
+                <CardDescription>
+                  Configure and manage API and scraping endpoints for data collection
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <EndpointManagement />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="file-import">
             <Card>
