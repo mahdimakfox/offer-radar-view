@@ -2,6 +2,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { endpointService } from './endpointService';
 import { ApiMapping } from './types/dataAcquisitionTypes';
 
+// Re-export the ApiMapping type for backward compatibility
+export type { ApiMapping };
+
 export interface ImportResult {
   success: number;
   failed: number;

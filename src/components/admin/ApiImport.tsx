@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, Download, CheckCircle, XCircle, ExternalLink, AlertTriangle } from 'lucide-react';
 import { useDataAcquisition } from '@/hooks/useDataAcquisition';
-import { dataAcquisitionService, ApiMapping } from '@/services/dataAcquisitionService';
+import { dataAcquisitionService } from '@/services/dataAcquisitionService';
+import { ApiMapping } from '@/services/types/dataAcquisitionTypes';
 
 interface FetchResult {
   provider_name: string;
