@@ -1,5 +1,5 @@
 
-import { Card } from '@/components/ui/card';
+import { Zap, Shield, Building, Smartphone, Wifi, Home } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -7,24 +7,42 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-bold mb-4">Sammenlign.no</h3>
+            <h3 className="text-xl font-bold mb-4">Sky Smart Valg</h3>
             <p className="text-gray-300 mb-4">
               Norges ledende sammenligningstjeneste for strøm, forsikring, bank og telekom.
             </p>
             <p className="text-gray-400 text-sm">
-              © 2024 Sammenlign.no. Alle rettigheter reservert.
+              © 2024 Sky Smart Valg. Alle rettigheter reservert.
             </p>
           </div>
           
           <div>
             <h4 className="font-semibold mb-4">Kategorier</h4>
             <ul className="space-y-2 text-gray-300">
-              <li><a href="#" className="hover:text-white">Strøm</a></li>
-              <li><a href="#" className="hover:text-white">Forsikring</a></li>
-              <li><a href="#" className="hover:text-white">Bank</a></li>
-              <li><a href="#" className="hover:text-white">Mobil</a></li>
-              <li><a href="#" className="hover:text-white">Bredbånd</a></li>
-              <li><a href="#" className="hover:text-white">Boligalarm</a></li>
+              <li className="flex items-center space-x-2">
+                <Zap className="h-4 w-4" />
+                <a href="#" className="hover:text-white">Strøm</a>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Shield className="h-4 w-4" />
+                <a href="#" className="hover:text-white">Forsikring</a>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Building className="h-4 w-4" />
+                <a href="#" className="hover:text-white">Bank</a>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Smartphone className="h-4 w-4" />
+                <a href="#" className="hover:text-white">Mobil</a>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Wifi className="h-4 w-4" />
+                <a href="#" className="hover:text-white">Bredbånd</a>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Home className="h-4 w-4" />
+                <a href="#" className="hover:text-white">Boligalarm</a>
+              </li>
             </ul>
           </div>
           
@@ -50,7 +68,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-gray-700 mt-12 pt-8 text-center text-gray-400">
-          <p>Sammenlign.no samler tilbud fra over 100+ leverandører og hjelper nordmenn med å spare penger.</p>
+          <p>Sky Smart Valg samler tilbud fra over 100+ leverandører og hjelper nordmenn med å spare penger.</p>
         </div>
       </div>
     </footer>

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Menu, X, LogIn, Search, User, Bell, Settings } from 'lucide-react';
+import { Menu, X, LogIn, Search, User, Settings, Zap, Wifi, Shield, Building, Smartphone, Home } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface NavigationProps {
@@ -17,11 +17,12 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
   const location = useLocation();
 
   const categories = [
-    { id: 'strom', name: 'Strøm', icon: '⚡', description: 'Sammenlign strømpriser' },
-    { id: 'internett', name: 'Internett', icon: '🌐', description: 'Bredbånd og fiber' },
-    { id: 'forsikring', name: 'Forsikring', icon: '🛡️', description: 'Bil, hjem og reise' },
-    { id: 'bank', name: 'Bank', icon: '🏦', description: 'Lån og sparing' },
-    { id: 'mobil', name: 'Mobil', icon: '📱', description: 'Mobilabonnement' }
+    { id: 'strom', name: 'Strøm', icon: Zap, description: 'Sammenlign strømpriser', count: 25 },
+    { id: 'internett', name: 'Internett', icon: Wifi, description: 'Bredbånd og fiber', count: 24 },
+    { id: 'forsikring', name: 'Forsikring', icon: Shield, description: 'Bil, hjem og reise', count: 22 },
+    { id: 'bank', name: 'Bank', icon: Building, description: 'Lån og sparing', count: 28 },
+    { id: 'mobil', name: 'Mobil', icon: Smartphone, description: 'Mobilabonnement', count: 21 },
+    { id: 'boligalarm', name: 'Boligalarm', icon: Home, description: 'Sikkerhet hjemme', count: 18 }
   ];
 
   const handleCategoryClick = (categoryId: string) => {
@@ -38,37 +39,23 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
 
   return (
     <nav className="bg-white shadow-lg border-b-2 border-blue-50">
-      {/* Top Bar */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-10 text-sm">
-            <div className="flex items-center space-x-6">
-              <span>📞 Kundeservice: 22 00 00 00</span>
-              <span>📧 post@sammenlign.no</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link to="/admin" className="hover:text-blue-200 transition-colors">
-                Admin
-              </Link>
-              <span>Norges største forbrukerportal siden 2014</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Navigation */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-              Sammenlign
-            </div>
-            <div className="flex flex-col">
-              <Badge variant="secondary" className="text-xs mb-1">
-                Bytt. Spar.
-              </Badge>
-              <span className="text-xs text-gray-500">Norges største</span>
+          {/* Logo - Moved from left corner for better balance */}
+          <Link to="/" className="flex items-center space-x-4 ml-8">
+            <div className="flex flex-col items-center">
+              <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-1">
+                Sky Smart Valg
+              </div>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="text-xs text-blue-600 border-blue-200">
+                  Sammenlign
+                </Badge>
+                <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+                  Spar
+                </Badge>
+              </div>
             </div>
           </Link>
 
@@ -95,10 +82,6 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
           {/* User Actions */}
           <div className="hidden md:flex items-center space-x-4">
             <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-              <Bell className="h-4 w-4" />
-              <span>Mine meldinger</span>
-            </Button>
-            <Button variant="ghost" size="sm" className="flex items-center space-x-2">
               <User className="h-4 w-4" />
               <span>Mine tilbud</span>
             </Button>
@@ -106,6 +89,12 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
               <Button variant="outline" size="sm" className="flex items-center space-x-2">
                 <LogIn className="h-4 w-4" />
                 <span>Logg inn</span>
+              </Button>
+            </Link>
+            <Link to="/admin">
+              <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+                <Settings className="h-4 w-4" />
+                <span>Admin</span>
               </Button>
             </Link>
           </div>
@@ -125,23 +114,27 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
         {/* Category Navigation */}
         {location.pathname === '/' && (
           <div className="hidden md:flex items-center justify-center space-x-1 pb-4 border-b border-gray-100">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => handleCategoryClick(category.id)}
-                className={`group flex flex-col items-center px-6 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  selectedCategory === category.id
-                    ? 'bg-blue-100 text-blue-700 shadow-md'
-                    : 'text-gray-600 hover:text-blue-700 hover:bg-blue-50'
-                }`}
-              >
-                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform duration-200">
-                  {category.icon}
-                </span>
-                <span className="font-semibold">{category.name}</span>
-                <span className="text-xs opacity-75">{category.description}</span>
-              </button>
-            ))}
+            {categories.map((category) => {
+              const IconComponent = category.icon;
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryClick(category.id)}
+                  className={`group flex flex-col items-center px-6 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    selectedCategory === category.id
+                      ? 'bg-blue-100 text-blue-700 shadow-md'
+                      : 'text-gray-600 hover:text-blue-700 hover:bg-blue-50'
+                  }`}
+                >
+                  <IconComponent className="h-6 w-6 mb-1 group-hover:scale-110 transition-transform duration-200" />
+                  <span className="font-semibold">{category.name}</span>
+                  <span className="text-xs opacity-75">{category.description}</span>
+                  <Badge variant="secondary" className="text-xs mt-1">
+                    {category.count} tilbud
+                  </Badge>
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -169,29 +162,43 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
             </div>
 
             <div className="space-y-2">
-              {location.pathname === '/' && categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => handleCategoryClick(category.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                    selectedCategory === category.id
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  <span className="text-xl">{category.icon}</span>
-                  <div className="text-left">
-                    <div>{category.name}</div>
-                    <div className="text-xs opacity-75">{category.description}</div>
-                  </div>
-                </button>
-              ))}
+              {location.pathname === '/' && categories.map((category) => {
+                const IconComponent = category.icon;
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => handleCategoryClick(category.id)}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                      selectedCategory === category.id
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    <IconComponent className="h-5 w-5" />
+                    <div className="text-left flex-1">
+                      <div className="flex items-center justify-between">
+                        <span>{category.name}</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {category.count}
+                        </Badge>
+                      </div>
+                      <div className="text-xs opacity-75">{category.description}</div>
+                    </div>
+                  </button>
+                );
+              })}
               
               <div className="pt-4 space-y-2">
                 <Link to="/login" className="block">
                   <Button variant="outline" size="sm" className="w-full justify-start space-x-2">
                     <LogIn className="h-4 w-4" />
                     <span>Logg inn</span>
+                  </Button>
+                </Link>
+                <Link to="/admin" className="block">
+                  <Button variant="ghost" size="sm" className="w-full justify-start space-x-2">
+                    <Settings className="h-4 w-4" />
+                    <span>Admin</span>
                   </Button>
                 </Link>
               </div>

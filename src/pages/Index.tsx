@@ -1,15 +1,14 @@
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import CategoryGrid from '@/components/CategoryGrid';
 import ProviderCardNew from '@/components/ProviderCardNew';
 import ComparisonTable from '@/components/ComparisonTable';
 import Hero from '@/components/Hero';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { Search } from 'lucide-react';
 
 const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState('strom');
@@ -44,12 +43,12 @@ const Index = () => {
             <Button 
               className="absolute right-2 top-2 h-10 bg-blue-600 hover:bg-blue-700"
             >
-              Søk
+              <Search className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        {/* Provider Grid */}
+        {/* Provider Grid - Data hentet dynamisk fra Supabase */}
         <ProviderCardNew 
           category={selectedCategory}
           searchTerm={searchTerm}

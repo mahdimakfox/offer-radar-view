@@ -12,14 +12,6 @@ const Hero = () => {
           Finn de beste tilbudene innen strøm, forsikring, bank, mobil og bredbånd. 
           Vi samler tilbud fra over 100+ leverandører og hjelper deg å spare penger.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 text-lg">
-            Sammenlign nå
-          </Button>
-          <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 text-lg">
-            Les mer
-          </Button>
-        </div>
       </div>
     </div>
   );
