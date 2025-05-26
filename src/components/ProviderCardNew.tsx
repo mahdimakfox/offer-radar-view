@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { providerService, Provider } from '@/services/providerService';
+import { Provider } from '@/services/providerService';
+import { useProviderData } from '@/hooks/useProviderData';
 import { useNavigate } from 'react-router-dom';
 import { Star, ExternalLink, Plus, Check, Search } from 'lucide-react';
 
@@ -14,32 +16,10 @@ interface ProviderCardNewProps {
 }
 
 const ProviderCardNew = ({ category, searchTerm, onSelect, selectedProviders }: ProviderCardNewProps) => {
-  const [providers, setProviders] = useState<Provider[]>([]);
-  const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState('price');
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchProviders = async () => {
-      setLoading(true);
-      try {
-        let data: Provider[];
-        if (searchTerm.trim()) {
-          data = await providerService.searchProviders(category, searchTerm);
-        } else {
-          data = await providerService.getProvidersByCategory(category);
-        }
-        setProviders(data);
-      } catch (error) {
-        console.error('Error fetching providers:', error);
-        setProviders([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProviders();
-  }, [category, searchTerm]);
+  
+  const { providers, count, loading, error } = useProviderData(category, searchTerm);
 
   const sortedProviders = [...providers].sort((a, b) => {
     if (sortBy === 'price') return a.price - b.price;
@@ -82,11 +62,23 @@ const ProviderCardNew = ({ category, searchTerm, onSelect, selectedProviders }: 
     );
   }
 
+  if (error) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-24 h-24 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4">
+          <Search className="h-12 w-12 text-red-400" />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">Feil ved lasting</h3>
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900">
-          {sortedProviders.length} leverandører funnet
+          {count} leverandører funnet
         </h2>
         <div className="flex items-center space-x-4">
           <select 

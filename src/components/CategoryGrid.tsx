@@ -1,6 +1,7 @@
 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useCategoryProviderCounts } from '@/hooks/useProviderData';
 
 const categories = [
   {
@@ -8,7 +9,6 @@ const categories = [
     name: 'Strøm',
     icon: '⚡',
     description: 'Sammenlign strømpriser og finn billigste tilbud',
-    providerCount: 25,
     color: 'from-yellow-400 to-orange-500'
   },
   {
@@ -16,7 +16,6 @@ const categories = [
     name: 'Forsikring',
     icon: '🛡️',
     description: 'Bil-, reise- og innboforsikring med best dekning',
-    providerCount: 22,
     color: 'from-green-400 to-blue-500'
   },
   {
@@ -24,7 +23,6 @@ const categories = [
     name: 'Bank',
     icon: '🏦',
     description: 'Lån, sparing og kredittkort med beste renter',
-    providerCount: 28,
     color: 'from-blue-400 to-purple-500'
   },
   {
@@ -32,7 +30,6 @@ const categories = [
     name: 'Mobil',
     icon: '📱',
     description: 'Mobilabonnement og telefoner til lavest pris',
-    providerCount: 21,
     color: 'from-pink-400 to-red-500'
   },
   {
@@ -40,15 +37,13 @@ const categories = [
     name: 'Internett',
     icon: '🌐',
     description: 'Fiber, bredbånd og TV-pakker med høy hastighet',
-    providerCount: 24,
     color: 'from-cyan-400 to-blue-500'
   },
   {
-    id: 'alarm',
+    id: 'boligalarm',
     name: 'Boligalarm',
     icon: '🔒',
     description: 'Sikkerhet og overvåkning for hjemmet ditt',
-    providerCount: 18,
     color: 'from-gray-400 to-gray-600'
   }
 ];
@@ -59,6 +54,8 @@ interface CategoryGridProps {
 }
 
 const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps) => {
+  const { counts, loading } = useCategoryProviderCounts();
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-16">
       {categories.map((category) => (
@@ -101,7 +98,7 @@ const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps)
                   : 'bg-gray-100 text-gray-700 group-hover:bg-blue-100 group-hover:text-blue-700'
               }`}
             >
-              {category.providerCount} leverandører
+              {loading ? '...' : (counts[category.id] || 0)} leverandører
             </Badge>
             
             {/* Selection Indicator */}
