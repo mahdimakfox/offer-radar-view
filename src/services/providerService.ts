@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
 
 export interface Provider {
   id: number;
@@ -16,10 +17,13 @@ export interface Provider {
   updated_at?: string;
 }
 
+// Use the Supabase generated type for providers table
+type ProviderRow = Tables<'providers'>;
+
 export const providerService = {
   async getProvidersByCategory(category: string): Promise<Provider[]> {
     const { data, error } = await supabase
-      .from('providers' as any)
+      .from('providers')
       .select('*')
       .eq('category', category)
       .order('rating', { ascending: false });
@@ -29,12 +33,25 @@ export const providerService = {
       return [];
     }
 
-    return (data || []) as Provider[];
+    return (data || []).map((row: ProviderRow) => ({
+      id: row.id,
+      name: row.name,
+      category: row.category,
+      price: Number(row.price),
+      logo_url: row.logo_url || undefined,
+      rating: Number(row.rating),
+      description: row.description,
+      external_url: row.external_url,
+      pros: row.pros || undefined,
+      cons: row.cons || undefined,
+      created_at: row.created_at || undefined,
+      updated_at: row.updated_at || undefined,
+    }));
   },
 
   async searchProviders(category: string, searchTerm: string): Promise<Provider[]> {
     const { data, error } = await supabase
-      .from('providers' as any)
+      .from('providers')
       .select('*')
       .eq('category', category)
       .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
@@ -45,12 +62,25 @@ export const providerService = {
       return [];
     }
 
-    return (data || []) as Provider[];
+    return (data || []).map((row: ProviderRow) => ({
+      id: row.id,
+      name: row.name,
+      category: row.category,
+      price: Number(row.price),
+      logo_url: row.logo_url || undefined,
+      rating: Number(row.rating),
+      description: row.description,
+      external_url: row.external_url,
+      pros: row.pros || undefined,
+      cons: row.cons || undefined,
+      created_at: row.created_at || undefined,
+      updated_at: row.updated_at || undefined,
+    }));
   },
 
   async getProviderById(id: number): Promise<Provider | null> {
     const { data, error } = await supabase
-      .from('providers' as any)
+      .from('providers')
       .select('*')
       .eq('id', id)
       .single();
@@ -60,6 +90,21 @@ export const providerService = {
       return null;
     }
 
-    return data as Provider;
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      name: data.name,
+      category: data.category,
+      price: Number(data.price),
+      logo_url: data.logo_url || undefined,
+      rating: Number(data.rating),
+      description: data.description,
+      external_url: data.external_url,
+      pros: data.pros || undefined,
+      cons: data.cons || undefined,
+      created_at: data.created_at || undefined,
+      updated_at: data.updated_at || undefined,
+    };
   }
 };
