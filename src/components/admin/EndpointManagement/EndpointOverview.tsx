@@ -1,15 +1,12 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import EndpointsTable from './EndpointsTable';
-import EndpointForm from './EndpointForm';
+import EndpointStats from './EndpointStats';
+import EndpointFilters from './EndpointFilters';
+import EndpointList from './EndpointList';
+import EndpointEditDialog from './EndpointEditDialog';
 
 interface ProviderEndpoint {
   id: string;
@@ -40,8 +37,6 @@ const EndpointOverview = () => {
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [editingEndpoint, setEditingEndpoint] = useState<ProviderEndpoint | null>(null);
-
-  const categories = ['strom', 'forsikring', 'bank', 'mobil', 'internett', 'boligalarm'];
 
   // Fetch endpoints
   const { data: endpoints = [], isLoading, refetch } = useQuery({
@@ -101,112 +96,33 @@ const EndpointOverview = () => {
     queryClient.invalidateQueries({ queryKey: ['provider-endpoints'] });
   };
 
-  // Calculate summary statistics
-  const activeEndpoints = endpoints.filter(e => e.is_active);
-  const inactiveEndpoints = endpoints.filter(e => !e.is_active);
-  const highFailureEndpoints = endpoints.filter(e => e.failure_count > 5);
-  const scrapingEndpoints = endpoints.filter(e => e.endpoint_type === 'scraping');
+  const handleEditClose = () => {
+    setEditingEndpoint(null);
+  };
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Totalt endepunkter</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{endpoints.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Aktive</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{activeEndpoints.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Inaktive</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-600">{inactiveEndpoints.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Scraping</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{scrapingEndpoints.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Problemer</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{highFailureEndpoints.length}</div>
-          </CardContent>
-        </Card>
-      </div>
+      <EndpointStats endpoints={endpoints} />
 
-      <div className="flex items-center space-x-4">
-        <Label htmlFor="category">Filtrer etter kategori:</Label>
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle kategorier</SelectItem>
-            {categories.map(cat => (
-              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button onClick={() => refetch()} variant="outline" size="sm">
-          Oppdater
-        </Button>
-      </div>
+      <EndpointFilters
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        onRefresh={() => refetch()}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Konfigurerte endepunkter</CardTitle>
-          <CardDescription>
-            {endpoints.length} endepunkter konfigurert
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Laster endepunkter...</div>
-          ) : (
-            <EndpointsTable
-              endpoints={endpoints}
-              onToggleActive={(id, isActive) => toggleEndpointMutation.mutate({ id, isActive })}
-              onEdit={handleEdit}
-              onDelete={(id) => deleteEndpointMutation.mutate(id)}
-            />
-          )}
-        </CardContent>
-      </Card>
+      <EndpointList
+        endpoints={endpoints}
+        isLoading={isLoading}
+        onToggleActive={(id, isActive) => toggleEndpointMutation.mutate({ id, isActive })}
+        onEdit={handleEdit}
+        onDelete={(id) => deleteEndpointMutation.mutate(id)}
+      />
 
-      {/* Edit Dialog */}
-      {editingEndpoint && (
-        <Dialog open={!!editingEndpoint} onOpenChange={() => setEditingEndpoint(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Rediger endpoint</DialogTitle>
-              <DialogDescription>Oppdater endpoint-konfigurasjon</DialogDescription>
-            </DialogHeader>
-            <EndpointForm 
-              endpoint={editingEndpoint}
-              onSave={handleEditSave}
-              onCancel={() => setEditingEndpoint(null)}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
+      <EndpointEditDialog
+        endpoint={editingEndpoint}
+        onClose={handleEditClose}
+        onSave={handleEditSave}
+      />
     </div>
   );
 };
