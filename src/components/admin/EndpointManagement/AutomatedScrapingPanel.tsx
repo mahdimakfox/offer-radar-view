@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -10,6 +9,7 @@ import ScrapingResults from './AutomatedScraping/ScrapingResults';
 import ScrapingLogs from './AutomatedScraping/ScrapingLogs';
 import ScrapingErrorDetails from './AutomatedScraping/ScrapingErrorDetails';
 import ScrapingInfoPanel from './AutomatedScraping/ScrapingInfoPanel';
+import DataExtractionPanel from './DataExtractionPanel';
 
 interface AutomatedScrapingPanelProps {
   onImportComplete?: () => void;
@@ -80,6 +80,11 @@ const AutomatedScrapingPanel: React.FC<AutomatedScrapingPanelProps> = ({ onImpor
 
   return (
     <div className="space-y-6">
+      {/* New Data Extraction Panel */}
+      <DataExtractionPanel />
+
+      <Separator />
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
