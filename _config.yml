@@ -5,8 +5,8 @@ description: "En omfattende database over leverandører innen ulike bransjer"
 author: "Leverandører Team"
 
 # GitHub Pages settings - Updated with actual values
-url: "https://leverandorer.github.io"
-baseurl: "/leverandor-portal"
+url: "https://mahdimakfox.github.io"
+baseurl: "/offer-radar-view"
 
 # Build settings
 markdown: kramdown
