@@ -1,39 +1,17 @@
+
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { List, Plus, Play, FileText, Settings, Database } from 'lucide-react';
 import EndpointOverview from './EndpointManagement/EndpointOverview';
 import AddNewEndpoint from './EndpointManagement/AddNewEndpoint';
 import ImportBatchExecution from './EndpointManagement/ImportBatchExecution';
 import EndpointLogs from './EndpointManagement/EndpointLogs';
 import ApiIntegrations from './EndpointManagement/ApiIntegrations';
-import EndpointForm from './EndpointManagement/EndpointForm';
-
-interface ProviderEndpoint {
-  id: string;
-  category: string;
-  name: string;
-  endpoint_type: 'api' | 'scraping';
-  url: string;
-  priority: number;
-  is_active: boolean;
-  auth_required: boolean;
-  auth_config?: any;
-  scraping_config?: any;
-  last_success_at?: string;
-  last_failure_at?: string;
-  failure_count: number;
-  total_requests: number;
-  success_rate: number;
-  created_at: string;
-  updated_at: string;
-}
 
 const EndpointManagement = () => {
   const queryClient = useQueryClient();
-  const [editingEndpoint, setEditingEndpoint] = useState<ProviderEndpoint | null>(null);
 
   const handleExecutionComplete = () => {
     queryClient.invalidateQueries({ queryKey: ['provider-endpoints'] });
@@ -108,26 +86,6 @@ const EndpointManagement = () => {
           <ApiIntegrations />
         </TabsContent>
       </Tabs>
-
-      {/* Edit Dialog */}
-      {editingEndpoint && (
-        <Dialog open={!!editingEndpoint} onOpenChange={() => setEditingEndpoint(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Rediger endpoint</DialogTitle>
-              <DialogDescription>Oppdater endpoint-konfigurasjon</DialogDescription>
-            </DialogHeader>
-            <EndpointForm 
-              endpoint={editingEndpoint}
-              onSave={() => {
-                setEditingEndpoint(null);
-                queryClient.invalidateQueries({ queryKey: ['provider-endpoints'] });
-              }}
-              onCancel={() => setEditingEndpoint(null)}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 };

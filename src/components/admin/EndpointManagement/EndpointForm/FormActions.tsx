@@ -1,5 +1,7 @@
 
+import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Save, X } from 'lucide-react';
 
 interface FormActionsProps {
   onCancel: () => void;
@@ -9,12 +11,14 @@ interface FormActionsProps {
 
 const FormActions = ({ onCancel, isLoading, isEditing }: FormActionsProps) => {
   return (
-    <div className="flex justify-end space-x-2">
+    <div className="flex justify-end space-x-2 pt-4 border-t">
       <Button type="button" variant="outline" onClick={onCancel}>
+        <X className="w-4 h-4 mr-2" />
         Cancel
       </Button>
       <Button type="submit" disabled={isLoading}>
-        {isLoading ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
+        <Save className="w-4 h-4 mr-2" />
+        {isLoading ? 'Saving...' : (isEditing ? 'Update Endpoint' : 'Create Endpoint')}
       </Button>
     </div>
   );

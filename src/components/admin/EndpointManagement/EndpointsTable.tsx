@@ -3,12 +3,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Globe, Code, Wand2 } from 'lucide-react';
 
 interface ProviderEndpoint {
   id: string;
   category: string;
   name: string;
+  provider_name?: string;
   endpoint_type: 'api' | 'scraping';
   url: string;
   priority: number;
@@ -16,11 +17,14 @@ interface ProviderEndpoint {
   auth_required: boolean;
   auth_config?: any;
   scraping_config?: any;
+  playwright_config?: any;
+  auto_generated_url?: boolean;
   last_success_at?: string;
   last_failure_at?: string;
   failure_count: number;
   total_requests: number;
   success_rate: number;
+  scraped_data_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -67,12 +71,14 @@ const EndpointsTable = ({ endpoints, onToggleActive, onEdit, onDelete }: Endpoin
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Name</TableHead>
+          <TableHead>Name / Provider</TableHead>
           <TableHead>Category</TableHead>
           <TableHead>Type</TableHead>
+          <TableHead>URL</TableHead>
           <TableHead>Priority</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Success Rate</TableHead>
+          <TableHead>Data Count</TableHead>
           <TableHead>Last Success</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
@@ -82,22 +88,50 @@ const EndpointsTable = ({ endpoints, onToggleActive, onEdit, onDelete }: Endpoin
           <TableRow key={endpoint.id}>
             <TableCell>
               <div>
-                <div className="font-medium">{endpoint.name}</div>
-                <div className="text-sm text-gray-500 truncate max-w-48">{endpoint.url}</div>
+                <div className="font-medium flex items-center">
+                  {endpoint.name}
+                  {endpoint.auto_generated_url && (
+                    <Wand2 className="w-3 h-3 ml-1 text-blue-500" title="Auto-generated URL" />
+                  )}
+                </div>
+                {endpoint.provider_name && (
+                  <div className="text-sm text-gray-500">{endpoint.provider_name}</div>
+                )}
               </div>
             </TableCell>
             <TableCell>
               <Badge variant="outline">{endpoint.category}</Badge>
             </TableCell>
             <TableCell>
-              <Badge variant={endpoint.endpoint_type === 'api' ? 'default' : 'secondary'}>
-                {endpoint.endpoint_type}
-              </Badge>
+              <div className="flex items-center">
+                {endpoint.endpoint_type === 'api' ? (
+                  <Code className="w-4 h-4 mr-1" />
+                ) : (
+                  <Globe className="w-4 h-4 mr-1" />
+                )}
+                <Badge variant={endpoint.endpoint_type === 'api' ? 'default' : 'secondary'}>
+                  {endpoint.endpoint_type}
+                </Badge>
+              </div>
+            </TableCell>
+            <TableCell>
+              <div className="max-w-48 truncate text-sm" title={endpoint.url}>
+                {endpoint.url}
+              </div>
             </TableCell>
             <TableCell>{endpoint.priority}</TableCell>
             <TableCell>{getStatusBadge(endpoint)}</TableCell>
             <TableCell>
               {endpoint.total_requests > 0 ? `${endpoint.success_rate}%` : 'N/A'}
+            </TableCell>
+            <TableCell>
+              {endpoint.endpoint_type === 'scraping' ? (
+                <Badge variant="outline">
+                  {endpoint.scraped_data_count || 0} scraped
+                </Badge>
+              ) : (
+                '-'
+              )}
             </TableCell>
             <TableCell>
               {endpoint.last_success_at ? formatDate(endpoint.last_success_at) : 'Never'}

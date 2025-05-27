@@ -1,15 +1,37 @@
 
-import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
+import { z } from 'zod';
+import { Form } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import FormFields from './FormFields';
+import EndpointFormFields from './EndpointFormFields';
 import FormActions from './FormActions';
+
+const endpointSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  provider_name: z.string().min(1, 'Provider name is required'),
+  category: z.string().min(1, 'Category is required'),
+  endpoint_type: z.enum(['api', 'scraping']),
+  url: z.string().url('Please enter a valid URL'),
+  priority: z.number().min(1).max(100),
+  is_active: z.boolean(),
+  auth_required: z.boolean(),
+  auth_config: z.any().optional(),
+  scraping_config: z.any().optional(),
+  playwright_config: z.any().optional(),
+  auto_generated_url: z.boolean().default(false)
+});
+
+type EndpointFormData = z.infer<typeof endpointSchema>;
 
 interface ProviderEndpoint {
   id: string;
   category: string;
   name: string;
+  provider_name?: string;
   endpoint_type: 'api' | 'scraping';
   url: string;
   priority: number;
@@ -17,6 +39,8 @@ interface ProviderEndpoint {
   auth_required: boolean;
   auth_config?: any;
   scraping_config?: any;
+  playwright_config?: any;
+  auto_generated_url?: boolean;
   last_success_at?: string;
   last_failure_at?: string;
   failure_count: number;
@@ -34,72 +58,82 @@ interface EndpointFormContainerProps {
 
 const EndpointFormContainer = ({ endpoint, onSave, onCancel }: EndpointFormContainerProps) => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({
-    name: endpoint?.name || '',
-    category: endpoint?.category || 'strom',
-    endpoint_type: endpoint?.endpoint_type || 'api',
-    url: endpoint?.url || '',
-    priority: endpoint?.priority || 1,
-    is_active: endpoint?.is_active ?? true,
-    auth_required: endpoint?.auth_required || false,
-    auth_config: endpoint?.auth_config ? JSON.stringify(endpoint.auth_config, null, 2) : '',
-    scraping_config: endpoint?.scraping_config ? JSON.stringify(endpoint.scraping_config, null, 2) : ''
+  const isEditing = !!endpoint;
+
+  const form = useForm<EndpointFormData>({
+    resolver: zodResolver(endpointSchema),
+    defaultValues: {
+      name: endpoint?.name || '',
+      provider_name: endpoint?.provider_name || '',
+      category: endpoint?.category || '',
+      endpoint_type: endpoint?.endpoint_type || 'api',
+      url: endpoint?.url || '',
+      priority: endpoint?.priority || 1,
+      is_active: endpoint?.is_active ?? true,
+      auth_required: endpoint?.auth_required || false,
+      auth_config: endpoint?.auth_config || {},
+      scraping_config: endpoint?.scraping_config || {},
+      playwright_config: endpoint?.playwright_config || {},
+      auto_generated_url: endpoint?.auto_generated_url || false
+    }
   });
 
   const saveEndpointMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const payload = {
+    mutationFn: async (data: EndpointFormData) => {
+      const endpointData = {
         ...data,
-        auth_config: data.auth_config ? JSON.parse(data.auth_config) : null,
-        scraping_config: data.scraping_config ? JSON.parse(data.scraping_config) : null,
         updated_at: new Date().toISOString()
       };
 
-      if (endpoint) {
+      if (isEditing) {
         const { error } = await supabase
           .from('provider_endpoints')
-          .update(payload)
+          .update(endpointData)
           .eq('id', endpoint.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('provider_endpoints')
-          .insert(payload);
+          .insert({
+            ...endpointData,
+            created_at: new Date().toISOString()
+          });
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['provider-endpoints'] });
-      toast({ 
-        title: endpoint ? "Endpoint updated" : "Endpoint created", 
-        description: "Changes saved successfully." 
+      toast({
+        title: isEditing ? "Endpoint updated" : "Endpoint created",
+        description: `The endpoint has been ${isEditing ? 'updated' : 'created'} successfully.`
       });
       onSave();
     },
     onError: (error) => {
-      toast({ 
-        title: "Error", 
-        description: `Failed to save endpoint: ${error.message}`, 
-        variant: "destructive" 
+      console.error('Save error:', error);
+      toast({
+        title: "Save failed",
+        description: `Failed to ${isEditing ? 'update' : 'create'} endpoint: ${error.message}`,
+        variant: "destructive"
       });
     }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    saveEndpointMutation.mutate(formData);
+  const onSubmit = (data: EndpointFormData) => {
+    console.log('Submitting endpoint data:', data);
+    saveEndpointMutation.mutate(data);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <FormFields formData={formData} setFormData={setFormData} />
-      <FormActions 
-        onCancel={onCancel} 
-        isLoading={saveEndpointMutation.isPending}
-        isEditing={!!endpoint}
-      />
-    </form>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <EndpointFormFields form={form} isEditing={isEditing} />
+        <FormActions 
+          onCancel={onCancel}
+          isLoading={saveEndpointMutation.isPending}
+          isEditing={isEditing}
+        />
+      </form>
+    </Form>
   );
 };
 

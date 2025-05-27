@@ -239,6 +239,7 @@ export type Database = {
         Row: {
           auth_config: Json | null
           auth_required: boolean | null
+          auto_generated_url: boolean | null
           category: string
           created_at: string
           endpoint_type: string
@@ -246,9 +247,13 @@ export type Database = {
           id: string
           is_active: boolean
           last_failure_at: string | null
+          last_scraped_at: string | null
           last_success_at: string | null
           name: string
+          playwright_config: Json | null
           priority: number
+          provider_name: string | null
+          scraped_data_count: number | null
           scraping_config: Json | null
           success_rate: number | null
           total_requests: number | null
@@ -258,6 +263,7 @@ export type Database = {
         Insert: {
           auth_config?: Json | null
           auth_required?: boolean | null
+          auto_generated_url?: boolean | null
           category: string
           created_at?: string
           endpoint_type: string
@@ -265,9 +271,13 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_failure_at?: string | null
+          last_scraped_at?: string | null
           last_success_at?: string | null
           name: string
+          playwright_config?: Json | null
           priority?: number
+          provider_name?: string | null
+          scraped_data_count?: number | null
           scraping_config?: Json | null
           success_rate?: number | null
           total_requests?: number | null
@@ -277,6 +287,7 @@ export type Database = {
         Update: {
           auth_config?: Json | null
           auth_required?: boolean | null
+          auto_generated_url?: boolean | null
           category?: string
           created_at?: string
           endpoint_type?: string
@@ -284,9 +295,13 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_failure_at?: string | null
+          last_scraped_at?: string | null
           last_success_at?: string | null
           name?: string
+          playwright_config?: Json | null
           priority?: number
+          provider_name?: string | null
+          scraped_data_count?: number | null
           scraping_config?: Json | null
           success_rate?: number | null
           total_requests?: number | null
@@ -349,12 +364,71 @@ export type Database = {
         }
         Relationships: []
       }
+      scraped_providers: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          endpoint_id: string
+          external_url: string
+          id: string
+          is_active: boolean | null
+          key_features: string[] | null
+          price: number | null
+          provider_name: string
+          rating: number | null
+          scraped_at: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          endpoint_id: string
+          external_url: string
+          id?: string
+          is_active?: boolean | null
+          key_features?: string[] | null
+          price?: number | null
+          provider_name: string
+          rating?: number | null
+          scraped_at?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          endpoint_id?: string
+          external_url?: string
+          id?: string
+          is_active?: boolean | null
+          key_features?: string[] | null
+          price?: number | null
+          provider_name?: string
+          rating?: number | null
+          scraped_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scraped_providers_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "provider_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_provider_url: {
+        Args: { provider_name: string; category: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

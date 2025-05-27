@@ -7,12 +7,15 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import EndpointsTable from './EndpointsTable';
+import EndpointForm from './EndpointForm';
 
 interface ProviderEndpoint {
   id: string;
   category: string;
   name: string;
+  provider_name?: string;
   endpoint_type: 'api' | 'scraping';
   url: string;
   priority: number;
@@ -20,11 +23,14 @@ interface ProviderEndpoint {
   auth_required: boolean;
   auth_config?: any;
   scraping_config?: any;
+  playwright_config?: any;
+  auto_generated_url?: boolean;
   last_success_at?: string;
   last_failure_at?: string;
   failure_count: number;
   total_requests: number;
   success_rate: number;
+  scraped_data_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -33,6 +39,7 @@ const EndpointOverview = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [editingEndpoint, setEditingEndpoint] = useState<ProviderEndpoint | null>(null);
 
   const categories = ['strom', 'forsikring', 'bank', 'mobil', 'internett', 'boligalarm'];
 
@@ -85,14 +92,24 @@ const EndpointOverview = () => {
     }
   });
 
+  const handleEdit = (endpoint: ProviderEndpoint) => {
+    setEditingEndpoint(endpoint);
+  };
+
+  const handleEditSave = () => {
+    setEditingEndpoint(null);
+    queryClient.invalidateQueries({ queryKey: ['provider-endpoints'] });
+  };
+
   // Calculate summary statistics
   const activeEndpoints = endpoints.filter(e => e.is_active);
   const inactiveEndpoints = endpoints.filter(e => !e.is_active);
   const highFailureEndpoints = endpoints.filter(e => e.failure_count > 5);
+  const scrapingEndpoints = endpoints.filter(e => e.endpoint_type === 'scraping');
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Totalt endepunkter</CardTitle>
@@ -115,6 +132,14 @@ const EndpointOverview = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-600">{inactiveEndpoints.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Scraping</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{scrapingEndpoints.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -159,12 +184,29 @@ const EndpointOverview = () => {
             <EndpointsTable
               endpoints={endpoints}
               onToggleActive={(id, isActive) => toggleEndpointMutation.mutate({ id, isActive })}
-              onEdit={() => {}} // Will be handled by parent component
+              onEdit={handleEdit}
               onDelete={(id) => deleteEndpointMutation.mutate(id)}
             />
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      {editingEndpoint && (
+        <Dialog open={!!editingEndpoint} onOpenChange={() => setEditingEndpoint(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Rediger endpoint</DialogTitle>
+              <DialogDescription>Oppdater endpoint-konfigurasjon</DialogDescription>
+            </DialogHeader>
+            <EndpointForm 
+              endpoint={editingEndpoint}
+              onSave={handleEditSave}
+              onCancel={() => setEditingEndpoint(null)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
