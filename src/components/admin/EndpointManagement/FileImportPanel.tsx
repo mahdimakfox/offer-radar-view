@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { FileUp, Upload, CheckCircle, AlertCircle } from 'lucide-react';
+import { FileUp, Upload, CheckCircle, AlertCircle, Database, Globe } from 'lucide-react';
 import { dataImportService, ImportStats } from '@/services/dataImportService';
 
 interface FileImportPanelProps {
@@ -31,7 +31,7 @@ const FileImportPanel = ({ onImportComplete }: FileImportPanelProps) => {
       if (stats.errors.length === 0) {
         toast({
           title: "Import vellykket",
-          description: `${stats.successfulImports} endepunkter opprettet, ${stats.duplicatesSkipped} duplikater hoppet over`,
+          description: `${stats.successfulImports} leverandører og endepunkter opprettet, ${stats.duplicatesSkipped} duplikater hoppet over`,
         });
       } else {
         toast({
@@ -64,13 +64,25 @@ const FileImportPanel = ({ onImportComplete }: FileImportPanelProps) => {
             <span>Import fra LEVERANDØRER.txt</span>
           </CardTitle>
           <CardDescription>
-            Automatisk import av leverandører fra den forhåndsopprettede filen
+            Automatisk import og oppsett av leverandører med scraping-endepunkter
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-sm text-gray-600">
-            <p>Dette vil importere alle leverandører fra LEVERANDØRER.txt og automatisk opprette scraping-endepunkter for hver av dem.</p>
-            <p className="mt-2">Eksisterende endepunkter vil bli hoppet over for å unngå duplikater.</p>
+          <div className="text-sm text-gray-600 space-y-2">
+            <p>Dette vil importere alle leverandører fra LEVERANDØRER.txt og automatisk:</p>
+            <ul className="list-disc list-inside space-y-1 ml-4">
+              <li className="flex items-center space-x-2">
+                <Database className="h-4 w-4 text-blue-500" />
+                <span>Opprette leverandøroppføringer i databasen</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Globe className="h-4 w-4 text-green-500" />
+                <span>Konfigurere scraping-endepunkter for hver leverandør</span>
+              </li>
+            </ul>
+            <p className="mt-2 text-xs text-gray-500">
+              Eksisterende leverandører og endepunkter vil bli hoppet over for å unngå duplikater.
+            </p>
           </div>
           
           <Button 
@@ -79,7 +91,7 @@ const FileImportPanel = ({ onImportComplete }: FileImportPanelProps) => {
             className="w-full"
           >
             <Upload className="h-4 w-4 mr-2" />
-            {importing ? 'Importerer...' : 'Start import'}
+            {importing ? 'Importerer leverandører og endepunkter...' : 'Start komplett import'}
           </Button>
         </CardContent>
       </Card>
@@ -119,11 +131,13 @@ const FileImportPanel = ({ onImportComplete }: FileImportPanelProps) => {
             {importStats.errors.length > 0 && (
               <div className="mt-4">
                 <h4 className="font-medium text-red-700 mb-2">Feil som oppstod:</h4>
-                <ul className="list-disc list-inside space-y-1 text-sm text-red-600">
-                  {importStats.errors.map((error, index) => (
-                    <li key={index}>{error}</li>
-                  ))}
-                </ul>
+                <div className="max-h-40 overflow-y-auto">
+                  <ul className="list-disc list-inside space-y-1 text-sm text-red-600">
+                    {importStats.errors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
           </CardContent>

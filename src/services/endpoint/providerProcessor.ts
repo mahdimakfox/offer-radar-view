@@ -26,6 +26,7 @@ export const insertProviderWithDuplicateDetection = async (
     
     const contentHash = calculateContentHash(provider);
     
+    // Check if provider already exists using the new unique constraint
     const { data: existingProvider, error: selectError } = await supabase
       .from('providers')
       .select('id')
@@ -39,6 +40,7 @@ export const insertProviderWithDuplicateDetection = async (
     }
 
     if (existingProvider) {
+      // Check if content has changed
       const { data: existingDuplicate, error: duplicateError } = await supabase
         .from('provider_duplicates')
         .select('id')
@@ -55,6 +57,7 @@ export const insertProviderWithDuplicateDetection = async (
         return { success: true, action: 'duplicate' };
       }
 
+      // Update existing provider
       const { error: updateError } = await supabase
         .from('providers')
         .update({
@@ -75,6 +78,7 @@ export const insertProviderWithDuplicateDetection = async (
         throw updateError;
       }
 
+      // Record the new content hash
       const { error: duplicateInsertError } = await supabase
         .from('provider_duplicates')
         .insert({
@@ -90,11 +94,12 @@ export const insertProviderWithDuplicateDetection = async (
       console.log(`Updated existing provider: ${provider.name}`);
       return { success: true, action: 'updated' };
     } else {
+      // Insert new provider using the new unique constraint
       const { data: insertedProvider, error: insertError } = await supabase
         .from('providers')
         .insert({
           name: provider.name,
-          provider_name: provider.name, // Keep this for compatibility
+          provider_name: provider.name,
           category: category,
           price: provider.price,
           rating: provider.rating,
@@ -111,10 +116,16 @@ export const insertProviderWithDuplicateDetection = async (
         .single();
 
       if (insertError) {
+        // Handle unique constraint violation gracefully
+        if (insertError.code === '23505') {
+          console.log(`Provider ${provider.name} already exists (caught by unique constraint), treating as duplicate`);
+          return { success: true, action: 'duplicate' };
+        }
         console.error('Error inserting provider:', insertError);
         throw insertError;
       }
 
+      // Record the initial content hash
       const { error: duplicateInsertError } = await supabase
         .from('provider_duplicates')
         .insert({

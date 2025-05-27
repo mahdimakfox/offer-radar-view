@@ -79,10 +79,32 @@ const createProviderFromEntry = async (provider: ProviderEntry): Promise<{ succe
       return Math.round((3.0 + Math.random() * 2.0) * 10) / 10;
     };
 
-    // Use upsert to handle duplicates
-    const { data, error: upsertError } = await supabase
+    // First check if provider already exists
+    const { data: existingProvider, error: checkError } = await supabase
       .from('providers')
-      .upsert([{
+      .select('id, name, category')
+      .eq('name', provider.name)
+      .eq('category', provider.category.toLowerCase())
+      .maybeSingle();
+
+    if (checkError) {
+      console.error(`Error checking existing provider ${provider.name}:`, checkError);
+      return { 
+        success: false, 
+        isDuplicate: false, 
+        error: checkError.message 
+      };
+    }
+
+    if (existingProvider) {
+      console.log(`Provider ${provider.name} already exists, skipping`);
+      return { success: true, isDuplicate: true };
+    }
+
+    // Insert new provider
+    const { data, error: insertError } = await supabase
+      .from('providers')
+      .insert({
         name: provider.name,
         provider_name: provider.name,
         external_url: provider.url,
@@ -95,26 +117,104 @@ const createProviderFromEntry = async (provider: ProviderEntry): Promise<{ succe
         cons: ['Kan ha bindingstid', 'Begrenset tilgjengelighet'],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      }], { 
-        onConflict: 'name,category',
-        ignoreDuplicates: false 
       })
-      .select('id');
+      .select('id')
+      .single();
 
-    if (upsertError) {
-      console.error(`Error upserting provider ${provider.name}:`, upsertError);
+    if (insertError) {
+      console.error(`Error inserting provider ${provider.name}:`, insertError);
       return { 
         success: false, 
         isDuplicate: false, 
-        error: upsertError.message 
+        error: insertError.message 
       };
     }
 
-    console.log(`Successfully processed provider: ${provider.name}`);
+    console.log(`Successfully inserted provider: ${provider.name}`);
     return { success: true, isDuplicate: false };
     
   } catch (error) {
     console.error(`Exception processing provider ${provider.name}:`, error);
+    return { 
+      success: false, 
+      isDuplicate: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
+  }
+};
+
+const createEndpointFromEntry = async (provider: ProviderEntry): Promise<{ success: boolean; isDuplicate: boolean; error?: string }> => {
+  try {
+    console.log(`Creating endpoint for: ${provider.name} (${provider.category})`);
+    
+    // First check if endpoint already exists
+    const { data: existingEndpoint, error: checkError } = await supabase
+      .from('provider_endpoints')
+      .select('id, name, category')
+      .eq('name', provider.name)
+      .eq('category', provider.category.toLowerCase())
+      .maybeSingle();
+
+    if (checkError) {
+      console.error(`Error checking existing endpoint ${provider.name}:`, checkError);
+      return { 
+        success: false, 
+        isDuplicate: false, 
+        error: checkError.message 
+      };
+    }
+
+    if (existingEndpoint) {
+      console.log(`Endpoint for ${provider.name} already exists, skipping`);
+      return { success: true, isDuplicate: true };
+    }
+
+    // Create scraping configuration
+    const scrapingConfig = {
+      selectors: {
+        price: '.price, .pricing, [data-price]',
+        rating: '.rating, .stars, [data-rating]',
+        description: '.description, .info, .product-info'
+      },
+      waitTime: 2000,
+      maxRetries: 3,
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    };
+
+    // Insert new endpoint
+    const { data, error: insertError } = await supabase
+      .from('provider_endpoints')
+      .insert({
+        name: provider.name,
+        provider_name: provider.name,
+        category: provider.category.toLowerCase(),
+        endpoint_type: 'scraping',
+        url: provider.url,
+        is_active: true,
+        priority: 1,
+        auth_required: false,
+        scraping_config: scrapingConfig,
+        auto_generated_url: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select('id')
+      .single();
+
+    if (insertError) {
+      console.error(`Error inserting endpoint ${provider.name}:`, insertError);
+      return { 
+        success: false, 
+        isDuplicate: false, 
+        error: insertError.message 
+      };
+    }
+
+    console.log(`Successfully created endpoint: ${provider.name}`);
+    return { success: true, isDuplicate: false };
+    
+  } catch (error) {
+    console.error(`Exception creating endpoint for ${provider.name}:`, error);
     return { 
       success: false, 
       isDuplicate: false, 
@@ -143,16 +243,25 @@ export const dataImportService = {
       // Process each provider
       for (const provider of providers) {
         try {
-          const result = await createProviderFromEntry(provider);
+          // Create both provider and endpoint
+          const providerResult = await createProviderFromEntry(provider);
+          const endpointResult = await createEndpointFromEntry(provider);
           
-          if (result.success) {
-            if (result.isDuplicate) {
+          if (providerResult.success && endpointResult.success) {
+            if (providerResult.isDuplicate || endpointResult.isDuplicate) {
               stats.duplicatesSkipped++;
             } else {
               stats.successfulImports++;
             }
           } else {
-            stats.errors.push(result.error || `Failed to process ${provider.name}`);
+            const errors = [];
+            if (!providerResult.success && providerResult.error) {
+              errors.push(`Provider: ${providerResult.error}`);
+            }
+            if (!endpointResult.success && endpointResult.error) {
+              errors.push(`Endpoint: ${endpointResult.error}`);
+            }
+            stats.errors.push(`${provider.name}: ${errors.join(', ')}`);
           }
           
           // Small delay to avoid overwhelming the database
