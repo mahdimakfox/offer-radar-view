@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Menu, X, LogIn, Search, User, Settings, Zap, Wifi, Shield, Building, Smartphone, Home } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -17,12 +16,12 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
   const location = useLocation();
 
   const categories = [
-    { id: 'strom', name: 'Strøm', icon: Zap, description: 'Sammenlign strømpriser', count: 25 },
-    { id: 'internett', name: 'Internett', icon: Wifi, description: 'Bredbånd og fiber', count: 24 },
-    { id: 'forsikring', name: 'Forsikring', icon: Shield, description: 'Bil, hjem og reise', count: 22 },
-    { id: 'bank', name: 'Bank', icon: Building, description: 'Lån og sparing', count: 28 },
-    { id: 'mobil', name: 'Mobil', icon: Smartphone, description: 'Mobilabonnement', count: 21 },
-    { id: 'boligalarm', name: 'Boligalarm', icon: Home, description: 'Sikkerhet hjemme', count: 18 }
+    { id: 'strom', name: 'Strøm', icon: Zap, description: 'Sammenlign strømpriser' },
+    { id: 'internett', name: 'Internett', icon: Wifi, description: 'Bredbånd og fiber' },
+    { id: 'forsikring', name: 'Forsikring', icon: Shield, description: 'Bil, hjem og reise' },
+    { id: 'bank', name: 'Bank', icon: Building, description: 'Lån og sparing' },
+    { id: 'mobil', name: 'Mobil', icon: Smartphone, description: 'Mobilabonnement' },
+    { id: 'boligalarm', name: 'Boligalarm', icon: Home, description: 'Sikkerhet hjemme' }
   ];
 
   const handleCategoryClick = (categoryId: string) => {
@@ -42,20 +41,10 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
       {/* Main Navigation */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* Logo - Moved from left corner for better balance */}
-          <Link to="/" className="flex items-center space-x-4 ml-8">
-            <div className="flex flex-col items-center">
-              <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-1">
-                Sky Smart Valg
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="text-xs text-blue-600 border-blue-200">
-                  Sammenlign
-                </Badge>
-                <Badge variant="outline" className="text-xs text-green-600 border-green-200">
-                  Spar
-                </Badge>
-              </div>
+          {/* Logo - Now interactive and clean */}
+          <Link to="/" className="flex items-center ml-8 group">
+            <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent transition-all duration-300 group-hover:scale-110 group-hover:from-blue-700 group-hover:to-blue-900">
+              Sky Smart Valg
             </div>
           </Link>
 
@@ -129,9 +118,6 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
                   <IconComponent className="h-6 w-6 mb-1 group-hover:scale-110 transition-transform duration-200" />
                   <span className="font-semibold">{category.name}</span>
                   <span className="text-xs opacity-75">{category.description}</span>
-                  <Badge variant="secondary" className="text-xs mt-1">
-                    {category.count} tilbud
-                  </Badge>
                 </button>
               );
             })}
@@ -178,9 +164,6 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
                     <div className="text-left flex-1">
                       <div className="flex items-center justify-between">
                         <span>{category.name}</span>
-                        <Badge variant="secondary" className="text-xs">
-                          {category.count}
-                        </Badge>
                       </div>
                       <div className="text-xs opacity-75">{category.description}</div>
                     </div>
