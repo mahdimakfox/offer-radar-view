@@ -1,0 +1,62 @@
+
+# Site settings
+title: "Leverandører - Finn din ideelle leverandør"
+description: "En omfattende database over leverandører innen ulike bransjer"
+author: "Leverandører Team"
+
+# GitHub Pages settings
+url: "https://YOUR_USERNAME.github.io"
+baseurl: "/YOUR_REPOSITORY_NAME"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+permalink: pretty
+
+# Exclude files from build
+exclude:
+  - README.md
+  - node_modules/
+  - .git/
+  - .github/
+  - package*.json
+  - src/
+  - components.json
+  - tailwind.config.ts
+  - vite.config.ts
+  - tsconfig*.json
+  - eslint.config.js
+  - postcss.config.js
+  - bun.lockb
+
+# Include important files
+include:
+  - _site/
+
+# Collections (if needed)
+collections:
+  providers:
+    output: true
+    permalink: /:collection/:name/
+
+# Default layouts
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "providers"
+    values:
+      layout: "provider"
+
+# Plugin settings
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# GitHub Pages safe plugins only
+safe: true
