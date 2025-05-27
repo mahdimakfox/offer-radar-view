@@ -9,6 +9,21 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          id: number
+          name: string
+        }
+        Insert: {
+          id?: number
+          name: string
+        }
+        Update: {
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       endpoint_execution_logs: {
         Row: {
           created_at: string
@@ -55,6 +70,56 @@ export type Database = {
             columns: ["endpoint_id"]
             isOneToOne: false
             referencedRelation: "provider_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      endpoints: {
+        Row: {
+          active: boolean | null
+          auth_config: Json | null
+          category_id: number | null
+          created_at: string | null
+          endpoint_type: string
+          id: number
+          name: string
+          priority: number | null
+          provider_name: string
+          selectors: Json | null
+          url: string
+        }
+        Insert: {
+          active?: boolean | null
+          auth_config?: Json | null
+          category_id?: number | null
+          created_at?: string | null
+          endpoint_type: string
+          id?: number
+          name: string
+          priority?: number | null
+          provider_name: string
+          selectors?: Json | null
+          url: string
+        }
+        Update: {
+          active?: boolean | null
+          auth_config?: Json | null
+          category_id?: number | null
+          created_at?: string | null
+          endpoint_type?: string
+          id?: number
+          name?: string
+          priority?: number | null
+          provider_name?: string
+          selectors?: Json | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endpoints_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
             referencedColumns: ["id"]
           },
         ]
@@ -115,6 +180,38 @@ export type Database = {
           total_providers?: number
         }
         Relationships: []
+      }
+      logs: {
+        Row: {
+          endpoint_id: number | null
+          id: number
+          message: string | null
+          status: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          endpoint_id?: number | null
+          id?: number
+          message?: string | null
+          status?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          endpoint_id?: number | null
+          id?: number
+          message?: string | null
+          status?: string | null
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logs_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       norwegian_provider_cache: {
         Row: {
@@ -225,15 +322,7 @@ export type Database = {
           original_source?: string | null
           provider_id?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "provider_duplicates_provider_id_fkey"
-            columns: ["provider_id"]
-            isOneToOne: false
-            referencedRelation: "providers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       provider_endpoints: {
         Row: {
@@ -312,57 +401,44 @@ export type Database = {
       }
       providers: {
         Row: {
-          category: string
-          cons: string[] | null
-          created_at: string | null
-          description: string
-          ehf_invoice_support: boolean | null
-          external_url: string
+          category_id: number | null
+          data: string | null
           id: number
-          industry_code: string | null
-          logo_url: string | null
+          imported_at: string | null
           name: string
-          org_number: string | null
-          price: number
-          pros: string[] | null
-          rating: number
-          updated_at: string | null
+          price: string | null
+          provider_name: string
+          source_url: string | null
         }
         Insert: {
-          category: string
-          cons?: string[] | null
-          created_at?: string | null
-          description: string
-          ehf_invoice_support?: boolean | null
-          external_url: string
+          category_id?: number | null
+          data?: string | null
           id?: number
-          industry_code?: string | null
-          logo_url?: string | null
+          imported_at?: string | null
           name: string
-          org_number?: string | null
-          price?: number
-          pros?: string[] | null
-          rating?: number
-          updated_at?: string | null
+          price?: string | null
+          provider_name: string
+          source_url?: string | null
         }
         Update: {
-          category?: string
-          cons?: string[] | null
-          created_at?: string | null
-          description?: string
-          ehf_invoice_support?: boolean | null
-          external_url?: string
+          category_id?: number | null
+          data?: string | null
           id?: number
-          industry_code?: string | null
-          logo_url?: string | null
+          imported_at?: string | null
           name?: string
-          org_number?: string | null
-          price?: number
-          pros?: string[] | null
-          rating?: number
-          updated_at?: string | null
+          price?: string | null
+          provider_name?: string
+          source_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "providers_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scraped_providers: {
         Row: {
