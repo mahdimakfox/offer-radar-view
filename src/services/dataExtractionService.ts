@@ -61,9 +61,9 @@ export const dataExtractionService = {
       const descriptionPatterns = [
         /<meta[^>]*name=["']description["'][^>]*content=["']([^"']{20,500})["']/i,
         /<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']{20,500})["']/i,
-        /<p[^>]*class=["'][^"']*(?:about|description|intro|summary|lead)[^"']*["'][^>]*>([^<]{30,300})</i,
-        /<div[^>]*class=["'][^"']*(?:about|description|intro|summary|hero)[^"']*["'][^>]*>.*?<p[^>]*>([^<]{30,300})</i,
-        /<h1[^>]*>.*?</h1>.*?<p[^>]*>([^<]{30,300})</i
+        /<p[^>]*class=["'][^"']*(?:about|description|intro|summary|lead)[^"']*["'][^>]*>([^<]{30,300})/i,
+        /<div[^>]*class=["'][^"']*(?:about|description|intro|summary|hero)[^"']*["'][^>]*>.*?<p[^>]*>([^<]{30,300})/i,
+        /<h1[^>]*>.*?<\/h1>.*?<p[^>]*>([^<]{30,300})/i
       ];
 
       for (const pattern of descriptionPatterns) {
