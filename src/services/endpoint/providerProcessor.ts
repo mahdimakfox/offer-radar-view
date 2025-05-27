@@ -94,6 +94,7 @@ export const insertProviderWithDuplicateDetection = async (
         .from('providers')
         .insert({
           name: provider.name,
+          provider_name: provider.name, // Keep this for compatibility
           category: category,
           price: provider.price,
           rating: provider.rating,
@@ -103,6 +104,7 @@ export const insertProviderWithDuplicateDetection = async (
           logo_url: provider.logo_url,
           pros: provider.pros,
           cons: provider.cons,
+          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .select('id')

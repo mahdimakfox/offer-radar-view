@@ -401,34 +401,70 @@ export type Database = {
       }
       providers: {
         Row: {
+          category: string
           category_id: number | null
+          cons: string[] | null
+          created_at: string | null
           data: string | null
+          description: string | null
+          ehf_invoice_support: boolean | null
+          external_url: string | null
           id: number
           imported_at: string | null
+          industry_code: string | null
+          logo_url: string | null
           name: string
-          price: string | null
+          org_number: string | null
+          price: number | null
+          pros: string[] | null
           provider_name: string
+          rating: number | null
           source_url: string | null
+          updated_at: string | null
         }
         Insert: {
+          category: string
           category_id?: number | null
+          cons?: string[] | null
+          created_at?: string | null
           data?: string | null
+          description?: string | null
+          ehf_invoice_support?: boolean | null
+          external_url?: string | null
           id?: number
           imported_at?: string | null
+          industry_code?: string | null
+          logo_url?: string | null
           name: string
-          price?: string | null
+          org_number?: string | null
+          price?: number | null
+          pros?: string[] | null
           provider_name: string
+          rating?: number | null
           source_url?: string | null
+          updated_at?: string | null
         }
         Update: {
+          category?: string
           category_id?: number | null
+          cons?: string[] | null
+          created_at?: string | null
           data?: string | null
+          description?: string | null
+          ehf_invoice_support?: boolean | null
+          external_url?: string | null
           id?: number
           imported_at?: string | null
+          industry_code?: string | null
+          logo_url?: string | null
           name?: string
-          price?: string | null
+          org_number?: string | null
+          price?: number | null
+          pros?: string[] | null
           provider_name?: string
+          rating?: number | null
           source_url?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
