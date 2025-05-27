@@ -33,7 +33,6 @@ interface DatabaseEndpoint {
   auth_config?: any;
   scraping_config?: any;
   last_success_at?: string;
-  last_failure_at?: string;
   failure_count: number;
   total_requests: number;
   success_rate: number;
@@ -41,7 +40,7 @@ interface DatabaseEndpoint {
   updated_at: string;
 }
 
-interface ExecutionResult {
+export interface ExecutionResult {
   success: boolean;
   providers: RealApiProvider[];
   error?: string;
