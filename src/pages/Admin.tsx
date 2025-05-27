@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import FileImport from '@/components/admin/FileImport';
 import ApiImport from '@/components/admin/ApiImport';
 import ImportLogs from '@/components/admin/ImportLogs';
 import EndpointManagement from '@/components/admin/EndpointManagement';
@@ -24,15 +23,14 @@ const Admin = () => {
             Admin Dashboard
           </h1>
           <p className="text-xl text-gray-600">
-            Manage provider data imports, API integrations, and endpoint configurations
+            Manage provider data through API integrations and endpoint configurations
           </p>
         </div>
 
         <Tabs defaultValue="endpoints" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="endpoints">Endpoint Management</TabsTrigger>
-            <TabsTrigger value="file-import">File Import</TabsTrigger>
-            <TabsTrigger value="api-import">API Import</TabsTrigger>
+            <TabsTrigger value="api-import">Data Import</TabsTrigger>
             <TabsTrigger value="logs">Import Logs</TabsTrigger>
           </TabsList>
 
@@ -41,7 +39,7 @@ const Admin = () => {
               <CardHeader>
                 <CardTitle>Endpoint Management</CardTitle>
                 <CardDescription>
-                  Configure and manage API and scraping endpoints for data collection
+                  Configure and manage API and scraping endpoints with fallback mechanisms
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -50,26 +48,12 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="file-import">
-            <Card>
-              <CardHeader>
-                <CardTitle>File Import</CardTitle>
-                <CardDescription>
-                  Upload .txt files to import provider data
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FileImport />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="api-import">
             <Card>
               <CardHeader>
-                <CardTitle>API Import</CardTitle>
+                <CardTitle>Data Import</CardTitle>
                 <CardDescription>
-                  Fetch real-time data from provider APIs
+                  Execute real-time data imports with automatic fallback and error handling
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -83,7 +67,7 @@ const Admin = () => {
               <CardHeader>
                 <CardTitle>Import Logs</CardTitle>
                 <CardDescription>
-                  Monitor import activities and results
+                  Monitor import activities, errors, and performance metrics
                 </CardDescription>
               </CardHeader>
               <CardContent>

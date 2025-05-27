@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { realApiService, RealApiProvider } from './realApiService';
+import { scrapingService, ScrapingConfig } from './scrapingService';
 
 interface ProviderEndpoint {
   id: string;
@@ -11,7 +12,7 @@ interface ProviderEndpoint {
   is_active: boolean;
   auth_required: boolean;
   auth_config?: any;
-  scraping_config?: any;
+  scraping_config?: ScrapingConfig;
   last_success_at?: string;
   last_failure_at?: string;
   failure_count: number;
@@ -48,6 +49,8 @@ interface ExecutionResult {
   providersFetched: number;
   providersSaved: number;
   duplicatesFound: number;
+  usedFallback?: boolean;
+  retriedCount?: number;
 }
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -229,13 +232,57 @@ const executeEndpoint = async (
   let providersFetched = 0;
   let providersSaved = 0;
   let duplicatesFound = 0;
+  let usedFallback = false;
+  let retriedCount = 0;
 
   try {
     console.log(`Executing ${endpoint.endpoint_type} endpoint: ${endpoint.name} for category ${endpoint.category}`);
     
-    // For now, we'll use the existing realApiService as a fallback
-    // In the future, this would be replaced with actual endpoint-specific logic
-    const apiResponse = await realApiService.fetchProvidersFromApi(endpoint.category);
+    let apiResponse;
+    
+    if (endpoint.endpoint_type === 'scraping' && endpoint.scraping_config) {
+      // Use enhanced scraping service
+      const scrapingResult = await scrapingService.executeScraping(
+        endpoint.url,
+        endpoint.scraping_config,
+        endpoint.category
+      );
+      
+      if (!scrapingResult.success) {
+        throw new Error(scrapingResult.error || 'Scraping failed');
+      }
+      
+      // Log scraping attempt
+      await scrapingService.logScrapingAttempt(
+        endpoint.url,
+        endpoint.category,
+        scrapingResult.success,
+        scrapingResult.error,
+        scrapingResult.retriedCount
+      );
+      
+      apiResponse = {
+        success: true,
+        data: scrapingResult.data.map(item => ({
+          name: item.name,
+          price: item.price,
+          rating: item.rating,
+          description: `Provider scraped from ${endpoint.name}`,
+          external_url: item.source || endpoint.url,
+          org_number: '',
+          logo_url: '',
+          pros: ['Scraped data'],
+          cons: []
+        }))
+      };
+      
+      usedFallback = scrapingResult.usedFallback || false;
+      retriedCount = scrapingResult.retriedCount;
+      
+    } else {
+      // Use existing API service
+      apiResponse = await realApiService.fetchProvidersFromApi(endpoint.category);
+    }
     
     if (!apiResponse.success) {
       throw new Error(apiResponse.error || 'Failed to fetch data from endpoint');
@@ -268,7 +315,9 @@ const executeEndpoint = async (
       executionTimeMs,
       providersFetched,
       providersSaved,
-      duplicatesFound
+      duplicatesFound,
+      usedFallback,
+      retriedCount
     };
 
     // Log the successful execution
@@ -284,7 +333,9 @@ const executeEndpoint = async (
       executionTimeMs,
       providersFetched,
       providersSaved,
-      duplicatesFound
+      duplicatesFound,
+      usedFallback,
+      retriedCount
     };
 
     // Log the failed execution
@@ -346,24 +397,36 @@ export const endpointService = {
       throw new Error(`No active endpoints configured for category: ${category}`);
     }
 
-    // Try endpoints in priority order
+    let lastError: string = '';
+    let attempts = 0;
+
+    // Try endpoints in priority order with enhanced fallback
     for (const endpoint of endpoints) {
       try {
-        console.log(`Trying endpoint: ${endpoint.name} (priority ${endpoint.priority})`);
+        attempts++;
+        console.log(`Trying endpoint: ${endpoint.name} (priority ${endpoint.priority}, attempt ${attempts})`);
         const result = await executeEndpoint(endpoint, 'fallback');
         
-        if (result.success) {
+        if (result.success && result.providersFetched > 0) {
           console.log(`Successfully executed endpoint: ${endpoint.name}`);
-          return result;
+          
+          // Add metadata about the fallback process
+          return {
+            ...result,
+            usedFallback: attempts > 1 || result.usedFallback
+          };
         }
         
-        console.warn(`Endpoint ${endpoint.name} failed, trying next...`);
+        lastError = result.error || 'No data returned';
+        console.warn(`Endpoint ${endpoint.name} returned no data, trying next...`);
+        
       } catch (error) {
+        lastError = error instanceof Error ? error.message : 'Unknown error';
         console.error(`Endpoint ${endpoint.name} failed with error:`, error);
         
         // If this is the last endpoint, don't continue
         if (endpoint === endpoints[endpoints.length - 1]) {
-          throw error;
+          break;
         }
         
         // Wait a bit before trying the next endpoint
@@ -371,6 +434,6 @@ export const endpointService = {
       }
     }
 
-    throw new Error('All endpoints failed');
+    throw new Error(`All ${attempts} endpoints failed. Last error: ${lastError}`);
   }
 };
