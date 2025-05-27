@@ -46,7 +46,7 @@ export const insertProviderWithDuplicateDetection = async (
         onConflict: 'name,category',
         ignoreDuplicates: false
       })
-      .select('id')
+      .select('id, created_at, updated_at')
       .single();
 
     if (upsertError) {
@@ -89,7 +89,7 @@ export const insertProviderWithDuplicateDetection = async (
     }
 
     // Determine if this was an insert or update based on created_at vs updated_at
-    const wasUpdate = upsertedProvider.created_at !== upsertedProvider.updated_at;
+    const wasUpdate = new Date(upsertedProvider.created_at).getTime() !== new Date(upsertedProvider.updated_at).getTime();
     const action = wasUpdate ? 'updated' : 'inserted';
     
     console.log(`${action} provider: ${provider.name}`);

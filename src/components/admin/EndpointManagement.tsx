@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { List, Plus, Play, FileText, Settings, Database, FileUp, Zap } from 'lucide-react';
+import { List, Plus, Play, FileText, Settings, Database, FileUp, Zap, Globe } from 'lucide-react';
 import EndpointOverview from './EndpointManagement/EndpointOverview';
 import AddNewEndpoint from './EndpointManagement/AddNewEndpoint';
 import ImportBatchExecution from './EndpointManagement/ImportBatchExecution';
@@ -11,6 +11,7 @@ import EndpointLogs from './EndpointManagement/EndpointLogs';
 import ApiIntegrations from './EndpointManagement/ApiIntegrations';
 import FileImportPanel from './EndpointManagement/FileImportPanel';
 import AutomatedImportPanel from './EndpointManagement/AutomatedImportPanel';
+import AutomatedScrapingPanel from './EndpointManagement/AutomatedScrapingPanel';
 
 const EndpointManagement = () => {
   const queryClient = useQueryClient();
@@ -33,10 +34,14 @@ const EndpointManagement = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="overview">
             <List className="w-4 h-4 mr-2" />
             Oversikt
+          </TabsTrigger>
+          <TabsTrigger value="scraping">
+            <Globe className="w-4 h-4 mr-2" />
+            Scraping
           </TabsTrigger>
           <TabsTrigger value="automated">
             <Zap className="w-4 h-4 mr-2" />
@@ -70,6 +75,20 @@ const EndpointManagement = () => {
 
         <TabsContent value="overview">
           <EndpointOverview />
+        </TabsContent>
+
+        <TabsContent value="scraping">
+          <Card>
+            <CardHeader>
+              <CardTitle>Automatisert Scraping og Import</CardTitle>
+              <CardDescription>
+                Komplett automatisert prosess som leser LEVERANDØRER.txt, scraper nettsider og lagrer data
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AutomatedScrapingPanel onImportComplete={handleImportComplete} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="automated">
