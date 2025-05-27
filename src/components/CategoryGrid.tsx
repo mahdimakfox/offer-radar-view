@@ -2,7 +2,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import CategoryIcon from '@/components/CategoryIcon';
-import { useCategoryCounts } from '@/hooks/useProviders';
 
 interface CategoryGridProps {
   selectedCategory: string;
@@ -55,8 +54,6 @@ const categories = [
 ];
 
 const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps) => {
-  const { counts, loading } = useCategoryCounts();
-
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -71,7 +68,6 @@ const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps)
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {categories.map((category) => {
           const isSelected = selectedCategory === category.id;
-          const providerCount = counts[category.id] || 0;
           
           return (
             <Card 
@@ -102,13 +98,6 @@ const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps)
                   <p className="text-sm text-gray-600 leading-relaxed">
                     {category.description}
                   </p>
-                  
-                  {/* Provider Count */}
-                  <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${category.color}`}>
-                      {loading ? '...' : `${providerCount} leverandører`}
-                    </span>
-                  </div>
                   
                   {/* Action Button */}
                   <Button 
