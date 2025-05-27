@@ -2,10 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import ApiImport from '@/components/admin/ApiImport';
-import ImportLogs from '@/components/admin/ImportLogs';
 import EndpointManagement from '@/components/admin/EndpointManagement';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -27,55 +24,11 @@ const Admin = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="endpoints" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="endpoints">Endpoint Management</TabsTrigger>
-            <TabsTrigger value="data-import">Data Import</TabsTrigger>
-            <TabsTrigger value="logs">Import Logs</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="endpoints">
-            <Card>
-              <CardHeader>
-                <CardTitle>Endpoint Management</CardTitle>
-                <CardDescription>
-                  Configure and manage API and scraping endpoints with fallback mechanisms
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <EndpointManagement />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="data-import">
-            <Card>
-              <CardHeader>
-                <CardTitle>Data Import</CardTitle>
-                <CardDescription>
-                  Execute real-time data imports with automatic fallback and error handling
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ApiImport />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="logs">
-            <Card>
-              <CardHeader>
-                <CardTitle>Import Logs</CardTitle>
-                <CardDescription>
-                  Monitor import activities, errors, and performance metrics
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ImportLogs />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <Card>
+          <CardContent className="p-6">
+            <EndpointManagement />
+          </CardContent>
+        </Card>
       </div>
 
       <Footer />

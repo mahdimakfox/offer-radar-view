@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { List, Plus, Play, FileText, Settings } from 'lucide-react';
+import { List, Plus, Play, FileText, Settings, Database } from 'lucide-react';
 import EndpointOverview from './EndpointManagement/EndpointOverview';
 import AddNewEndpoint from './EndpointManagement/AddNewEndpoint';
 import ImportBatchExecution from './EndpointManagement/ImportBatchExecution';
@@ -46,13 +46,8 @@ const EndpointManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Endpoint Management</h2>
-        <p className="text-gray-600">Administrer API- og scraping-endepunkter for datainnsamling</p>
-      </div>
-
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">
             <List className="w-4 h-4 mr-2" />
             Endepunktoversikt
@@ -64,6 +59,10 @@ const EndpointManagement = () => {
           <TabsTrigger value="execution">
             <Play className="w-4 h-4 mr-2" />
             Import/Batch-kjøring
+          </TabsTrigger>
+          <TabsTrigger value="all-data">
+            <Database className="w-4 h-4 mr-2" />
+            Hent alle data
           </TabsTrigger>
           <TabsTrigger value="logs">
             <FileText className="w-4 h-4 mr-2" />
@@ -85,6 +84,23 @@ const EndpointManagement = () => {
 
         <TabsContent value="execution">
           <ImportBatchExecution onExecutionComplete={handleExecutionComplete} />
+        </TabsContent>
+
+        <TabsContent value="all-data">
+          <Card>
+            <CardHeader>
+              <CardTitle>Hent alle data</CardTitle>
+              <CardDescription>
+                Utfør import fra alle aktive endepunkter på tvers av kategorier
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ImportBatchExecution 
+                onExecutionComplete={handleExecutionComplete} 
+                showAllDataOption={true}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="logs">
