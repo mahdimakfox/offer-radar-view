@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { List, Plus, Play, FileText, Settings, Database } from 'lucide-react';
 import EndpointOverview from './EndpointManagement/EndpointOverview';
@@ -95,10 +95,7 @@ const EndpointManagement = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ImportBatchExecution 
-                onExecutionComplete={handleExecutionComplete} 
-                showAllDataOption={true}
-              />
+              <ImportBatchExecution onExecutionComplete={handleExecutionComplete} />
             </CardContent>
           </Card>
         </TabsContent>
