@@ -5,8 +5,8 @@ import { Menu, X, Home, User, Settings, Search } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 interface NavigationProps {
-  selectedCategory: string;
-  onCategoryChange: (category: string) => void;
+  selectedCategory?: string;
+  onCategoryChange?: (category: string) => void;
 }
 
 const categories = [
@@ -24,12 +24,15 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
   const navigate = useNavigate();
 
   const handleCategoryClick = (categoryId: string) => {
-    onCategoryChange(categoryId);
-    navigate(`/?category=${categoryId}`);
-    setIsOpen(false);
+    if (onCategoryChange) {
+      onCategoryChange(categoryId);
+      navigate(`/?category=${categoryId}`);
+      setIsOpen(false);
+    }
   };
 
   const isHomePage = location.pathname === '/';
+  const showCategoryNavigation = isHomePage && onCategoryChange && selectedCategory;
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
@@ -56,7 +59,7 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
             </Link>
 
             {/* Category Navigation */}
-            {isHomePage && (
+            {showCategoryNavigation && (
               <div className="flex items-center space-x-1">
                 {categories.map((category) => (
                   <Button
@@ -109,7 +112,7 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
                 Hjem
               </Link>
 
-              {isHomePage && (
+              {showCategoryNavigation && (
                 <div className="pl-4 space-y-1">
                   <div className="text-sm font-medium text-gray-500 mb-2">Kategorier:</div>
                   {categories.map((category) => (
