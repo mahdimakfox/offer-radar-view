@@ -1,0 +1,66 @@
+
+strom|Hafslund|https://www.hafslundstrom.no/
+strom|Tibber|https://www.tibber.com/
+strom|Fjordkraft|https://www.fjordkraft.no/
+strom|Gudbrandsdal Energi|https://www.gudbrandsdalenergi.no/
+strom|Agva Kraft|https://www.agvakraft.no/
+strom|BKK|https://www.bkk.no/
+strom|Istad Kraft|https://www.istadkraft.no/
+strom|Eidsiva Energi|https://www.eidsiva.no/
+strom|Lyse|https://www.lyse.no/
+strom|Fortum|https://www.fortum.no/
+
+internett|Get|https://www.get.no/
+internett|Altibox|https://www.altibox.no/
+internett|NextGenTel|https://www.nextgentel.no/
+internett|Telia|https://www.telia.no/bredband/
+internett|Telenor|https://www.telenor.no/bredband/
+internett|Ice|https://www.ice.no/bredband/
+internett|Broadnet|https://www.broadnet.no/
+internett|Phonero|https://www.phonero.no/bredband/
+internett|Fiberinett|https://www.fiberinett.no/
+internett|Com4|https://www.com4.no/
+
+forsikring|Gjensidige|https://www.gjensidige.no/
+forsikring|If|https://www.if.no/
+forsikring|Tryg|https://www.tryg.no/
+forsikring|Frende|https://www.frende.no/
+forsikring|DNB Forsikring|https://www.dnb.no/forsikring/
+forsikring|KLP Forsikring|https://www.klp.no/forsikring
+forsikring|Codan|https://www.codanforsikring.no/
+forsikring|Eika Forsikring|https://www.eika.no/forsikring/
+forsikring|SpareBank 1 Forsikring|https://www.sparebank1.no/forsikring/
+forsikring|If Livsforsikring|https://www.if.no/livsforsikring/
+
+bank|DNB|https://www.dnb.no/
+bank|SpareBank 1|https://www.sparebank1.no/
+bank|Nordea|https://www.nordea.no/
+bank|Handelsbanken|https://www.handelsbanken.no/
+bank|Santander Consumer Bank|https://www.santanderconsumer.no/
+bank|Bank Norwegian|https://www.banknorwegian.no/
+bank|Danske Bank|https://www.danskebank.no/
+bank|Sbanken|https://www.sbanken.no/
+bank|BN Bank|https://www.bnbank.no/
+bank|Kredinor|https://www.kredinor.no/
+
+mobil|Telenor|https://www.telenor.no/mobil/
+mobil|Telia|https://www.telia.no/mobilabonnement/
+mobil|Ice|https://www.ice.no/mobilabonnement/
+mobil|OneCall|https://www.onecall.no/
+mobil|Chilimobil|https://www.chilimobil.no/
+mobil|Phonero|https://www.phonero.no/
+mobil|Talkmore|https://www.talkmore.no/
+mobil|MyCall|https://www.mycall.no/
+mobil|Happybytes|https://www.happybytes.no/
+mobil|Fjordkraft Mobil|https://www.fjordkraft.no/mobilabonnement/
+
+boligalarm|Verisure|https://www.verisure.no/
+boligalarm|Sector Alarm|https://www.sectoralarm.no/
+boligalarm|Trygg Heim|https://www.tryggheim.no/
+boligalarm|SafeHome|https://www.safehome.no/
+boligalarm|Securitas Direct|https://www.securitasdirect.no/
+boligalarm|Bosch Smart Home|https://www.bosch-smarthome.com/no/
+boligalarm|Proguard|https://www.proguard.no/
+boligalarm|ADT Norge|https://www.adt.no/
+boligalarm|Nexa|https://www.nexa.no/
+boligalarm|Home Control|https://www.homecontrol.no/
