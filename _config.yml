@@ -4,7 +4,7 @@ title: "Leverandører - Finn din ideelle leverandør"
 description: "En omfattende database over leverandører innen ulike bransjer"
 author: "Leverandører Team"
 
-# GitHub Pages settings - Updated with actual values
+# GitHub Pages settings
 url: "https://mahdimakfox.github.io"
 baseurl: "/offer-radar-view"
 
@@ -32,7 +32,7 @@ exclude:
   - Gemfile.lock
   - vendor/
 
-# Collections (if needed)
+# Collections
 collections:
   providers:
     output: true
@@ -51,11 +51,12 @@ defaults:
     values:
       layout: "provider"
 
-# Plugin settings
+# GitHub Pages plugins
 plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
+  - jekyll-github-metadata
 
-# GitHub Pages safe plugins only
+# GitHub Pages safe mode
 safe: true
