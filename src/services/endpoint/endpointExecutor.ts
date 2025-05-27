@@ -34,10 +34,8 @@ export const executeEndpoint = async (
       
       await scrapingService.logScrapingAttempt(
         endpoint.url,
-        endpoint.category,
         scrapingResult.success,
-        scrapingResult.error,
-        scrapingResult.retriedCount
+        scrapingResult.error
       );
       
       apiResponse = {
