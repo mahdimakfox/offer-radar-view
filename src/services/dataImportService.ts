@@ -14,6 +14,16 @@ export interface ImportStats {
   duplicatesSkipped: number;
 }
 
+// Kategori mapping til category_id som du foreslo
+const categoryMap: Record<string, number> = {
+  strom: 2,
+  internett: 5,
+  forsikring: 3,
+  bank: 4,
+  mobil: 1,
+  boligalarm: 6
+};
+
 const parseProvidersFile = (fileContent: string): ProviderEntry[] => {
   const lines = fileContent.split('\n').filter(line => line.trim());
   const providers: ProviderEntry[] = [];
@@ -34,64 +44,60 @@ const parseProvidersFile = (fileContent: string): ProviderEntry[] => {
   return providers;
 };
 
-const createEndpointFromProvider = async (provider: ProviderEntry): Promise<boolean> => {
+const createProviderFromEntry = async (provider: ProviderEntry): Promise<{ success: boolean; isDuplicate: boolean; error?: string }> => {
   try {
-    // Check if endpoint already exists
-    const { data: existingEndpoint, error: checkError } = await supabase
-      .from('provider_endpoints')
-      .select('id')
-      .eq('category', provider.category)
-      .eq('name', provider.name)
-      .eq('url', provider.url)
-      .maybeSingle();
-
-    if (checkError) {
-      console.error('Error checking existing endpoint:', checkError);
-      return false;
+    console.log(`Processing provider: ${provider.name} (${provider.category})`);
+    
+    // Sjekk kategori mapping
+    const categoryId = categoryMap[provider.category.toLowerCase()];
+    if (!categoryId) {
+      console.warn(`Ukjent kategori: ${provider.category}`);
+      return { 
+        success: false, 
+        isDuplicate: false, 
+        error: `Ukjent kategori: ${provider.category}` 
+      };
     }
 
-    if (existingEndpoint) {
-      console.log(`Endpoint already exists for ${provider.name}, skipping`);
-      return false; // Indicates duplicate, not error
-    }
-
-    // Create new endpoint
-    const { error: insertError } = await supabase
-      .from('provider_endpoints')
-      .insert({
-        category: provider.category,
+    // Bruk upsert for å håndtere duplikater som du foreslo
+    const { data, error: upsertError } = await supabase
+      .from('providers')
+      .upsert([{
         name: provider.name,
         provider_name: provider.name,
-        endpoint_type: 'scraping',
-        url: provider.url,
-        priority: 5,
-        is_active: true,
-        auth_required: false,
-        auto_generated_url: true,
-        scraping_config: {
-          selectors: {
-            name: 'h1, .company-name, .provider-name, title',
-            description: '.description, .about, p',
-            price: '.price, .pricing, .cost',
-            rating: '.rating, .score, .stars'
-          },
-          waitTime: 2000,
-          maxRetries: 3
-        },
+        external_url: provider.url,
+        category_id: categoryId,
+        category: provider.category.toLowerCase(), // Behold også tekstkategori for kompatibilitet
+        price: null,
+        rating: null,
+        description: '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      });
+      }], { 
+        onConflict: 'name,category',
+        ignoreDuplicates: false 
+      })
+      .select('id');
 
-    if (insertError) {
-      console.error(`Error inserting endpoint for ${provider.name}:`, insertError);
-      return false;
+    if (upsertError) {
+      console.error(`Error upserting provider ${provider.name}:`, upsertError);
+      return { 
+        success: false, 
+        isDuplicate: false, 
+        error: upsertError.message 
+      };
     }
 
-    console.log(`Successfully created endpoint for ${provider.name}`);
-    return true;
+    console.log(`Successfully processed provider: ${provider.name}`);
+    return { success: true, isDuplicate: false };
+    
   } catch (error) {
-    console.error(`Exception creating endpoint for ${provider.name}:`, error);
-    return false;
+    console.error(`Exception processing provider ${provider.name}:`, error);
+    return { 
+      success: false, 
+      isDuplicate: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
   }
 };
 
@@ -115,12 +121,16 @@ export const dataImportService = {
       // Process each provider
       for (const provider of providers) {
         try {
-          const result = await createEndpointFromProvider(provider);
+          const result = await createProviderFromEntry(provider);
           
-          if (result === true) {
-            stats.successfulImports++;
+          if (result.success) {
+            if (result.isDuplicate) {
+              stats.duplicatesSkipped++;
+            } else {
+              stats.successfulImports++;
+            }
           } else {
-            stats.duplicatesSkipped++;
+            stats.errors.push(result.error || `Failed to process ${provider.name}`);
           }
           
           // Small delay to avoid overwhelming the database
@@ -150,7 +160,9 @@ export const dataImportService = {
       if (!response.ok) {
         throw new Error(`Failed to load file: ${response.statusText}`);
       }
-      return await response.text();
+      const content = await response.text();
+      console.log('Filen ble lest, første 200 tegn:\n', content.slice(0, 200));
+      return content;
     } catch (error) {
       throw new Error(`Could not load LEVERANDØRER.txt: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
