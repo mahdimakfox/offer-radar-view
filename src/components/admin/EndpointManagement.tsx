@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { List, Plus, Play, FileText, Settings, Database } from 'lucide-react';
+import { List, Plus, Play, FileText, Settings, Database, FileUp } from 'lucide-react';
 import EndpointOverview from './EndpointManagement/EndpointOverview';
 import AddNewEndpoint from './EndpointManagement/AddNewEndpoint';
 import ImportBatchExecution from './EndpointManagement/ImportBatchExecution';
 import EndpointLogs from './EndpointManagement/EndpointLogs';
 import ApiIntegrations from './EndpointManagement/ApiIntegrations';
+import FileImportPanel from './EndpointManagement/FileImportPanel';
 
 const EndpointManagement = () => {
   const queryClient = useQueryClient();
@@ -22,38 +23,61 @@ const EndpointManagement = () => {
     queryClient.invalidateQueries({ queryKey: ['provider-endpoints'] });
   };
 
+  const handleImportComplete = () => {
+    queryClient.invalidateQueries({ queryKey: ['provider-endpoints'] });
+    queryClient.invalidateQueries({ queryKey: ['endpoint-logs'] });
+  };
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">
             <List className="w-4 h-4 mr-2" />
-            Endepunktoversikt
+            Oversikt
+          </TabsTrigger>
+          <TabsTrigger value="file-import">
+            <FileUp className="w-4 h-4 mr-2" />
+            Fil-import
           </TabsTrigger>
           <TabsTrigger value="add-new">
             <Plus className="w-4 h-4 mr-2" />
-            Legg til nytt endepunkt
+            Legg til
           </TabsTrigger>
           <TabsTrigger value="execution">
             <Play className="w-4 h-4 mr-2" />
-            Import/Batch-kjøring
+            Kjøring
           </TabsTrigger>
           <TabsTrigger value="all-data">
             <Database className="w-4 h-4 mr-2" />
-            Hent alle data
+            Alle data
           </TabsTrigger>
           <TabsTrigger value="logs">
             <FileText className="w-4 h-4 mr-2" />
-            Logg
+            Logger
           </TabsTrigger>
           <TabsTrigger value="integrations">
             <Settings className="w-4 h-4 mr-2" />
-            API-integrasjoner
+            API
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
           <EndpointOverview />
+        </TabsContent>
+
+        <TabsContent value="file-import">
+          <Card>
+            <CardHeader>
+              <CardTitle>Import leverandører fra fil</CardTitle>
+              <CardDescription>
+                Automatisk opprettelse av endepunkter basert på LEVERANDØRER.txt
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FileImportPanel onImportComplete={handleImportComplete} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="add-new">
