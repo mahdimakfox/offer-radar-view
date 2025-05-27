@@ -4,9 +4,9 @@ title: "Leverandører - Finn din ideelle leverandør"
 description: "En omfattende database over leverandører innen ulike bransjer"
 author: "Leverandører Team"
 
-# GitHub Pages settings - REPLACE THESE WITH YOUR ACTUAL VALUES
-url: "https://YOUR_USERNAME.github.io"
-baseurl: "/YOUR_REPOSITORY_NAME"
+# GitHub Pages settings - Updated with actual values
+url: "https://leverandorer.github.io"
+baseurl: "/leverandor-portal"
 
 # Build settings
 markdown: kramdown
