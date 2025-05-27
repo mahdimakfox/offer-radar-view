@@ -9,10 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Plus, Settings, Activity } from 'lucide-react';
 import EndpointForm from './EndpointManagement/EndpointForm';
 import EndpointsTable from './EndpointManagement/EndpointsTable';
 import ExecutionLogsTable from './EndpointManagement/ExecutionLogsTable';
+import EndpointExecutionPanel from './EndpointManagement/EndpointExecutionPanel';
 
 interface ProviderEndpoint {
   id: string;
@@ -97,10 +98,10 @@ const EndpointManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['provider-endpoints'] });
-      toast({ title: "Endpoint updated", description: "Status has been changed successfully." });
+      toast({ title: "Endpoint oppdatert", description: "Status er endret." });
     },
     onError: (error) => {
-      toast({ title: "Error", description: `Failed to update endpoint: ${error.message}`, variant: "destructive" });
+      toast({ title: "Feil", description: `Kunne ikke oppdatere endpoint: ${error.message}`, variant: "destructive" });
     }
   });
 
@@ -112,32 +113,37 @@ const EndpointManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['provider-endpoints'] });
-      toast({ title: "Endpoint deleted", description: "Endpoint has been removed successfully." });
+      toast({ title: "Endpoint slettet", description: "Endpoint er fjernet." });
     },
     onError: (error) => {
-      toast({ title: "Error", description: `Failed to delete endpoint: ${error.message}`, variant: "destructive" });
+      toast({ title: "Feil", description: `Kunne ikke slette endpoint: ${error.message}`, variant: "destructive" });
     }
   });
+
+  const handleExecutionComplete = () => {
+    refetchEndpoints();
+    queryClient.invalidateQueries({ queryKey: ['endpoint-logs'] });
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Endpoint Management</h2>
-          <p className="text-gray-600">Manage API and scraping endpoints for data collection</p>
+          <p className="text-gray-600">Administrer API- og scraping-endepunkter for datainnsamling</p>
         </div>
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Endpoint
+              Legg til endpoint
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Add New Endpoint</DialogTitle>
-              <DialogDescription>Configure a new API or scraping endpoint for data collection</DialogDescription>
+              <DialogTitle>Legg til nytt endpoint</DialogTitle>
+              <DialogDescription>Konfigurer et nytt API- eller scraping-endpoint for datainnsamling</DialogDescription>
             </DialogHeader>
             <EndpointForm 
               onSave={() => {
@@ -152,19 +158,26 @@ const EndpointManagement = () => {
 
       <Tabs defaultValue="endpoints" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="endpoints">Endpoints</TabsTrigger>
-          <TabsTrigger value="logs">Execution Logs</TabsTrigger>
+          <TabsTrigger value="endpoints">
+            <Settings className="w-4 h-4 mr-2" />
+            Endepunkter
+          </TabsTrigger>
+          <TabsTrigger value="execution">
+            <Activity className="w-4 h-4 mr-2" />
+            Utførelse
+          </TabsTrigger>
+          <TabsTrigger value="logs">Logg</TabsTrigger>
         </TabsList>
 
         <TabsContent value="endpoints" className="space-y-4">
           <div className="flex items-center space-x-4">
-            <Label htmlFor="category">Filter by category:</Label>
+            <Label htmlFor="category">Filtrer etter kategori:</Label>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="all">Alle kategorier</SelectItem>
                 {categories.map(cat => (
                   <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                 ))}
@@ -174,14 +187,14 @@ const EndpointManagement = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Configured Endpoints</CardTitle>
+              <CardTitle>Konfigurerte endepunkter</CardTitle>
               <CardDescription>
-                {endpoints.length} endpoints configured
+                {endpoints.length} endepunkter konfigurert
               </CardDescription>
             </CardHeader>
             <CardContent>
               {endpointsLoading ? (
-                <div className="text-center py-8">Loading endpoints...</div>
+                <div className="text-center py-8">Laster endepunkter...</div>
               ) : (
                 <EndpointsTable
                   endpoints={endpoints}
@@ -194,15 +207,38 @@ const EndpointManagement = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="execution" className="space-y-4">
+          <div className="space-y-4">
+            {endpoints.filter(endpoint => endpoint.is_active).map(endpoint => (
+              <EndpointExecutionPanel
+                key={endpoint.id}
+                endpoint={endpoint}
+                onExecutionComplete={handleExecutionComplete}
+              />
+            ))}
+            
+            {endpoints.filter(endpoint => endpoint.is_active).length === 0 && (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <p className="text-gray-500">Ingen aktive endepunkter funnet</p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Aktiver endepunkter i "Endepunkter" fanen for å kunne utføre dem
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
         <TabsContent value="logs" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Execution Logs</CardTitle>
-              <CardDescription>Last 50 endpoint executions</CardDescription>
+              <CardTitle>Nylige utførelseslogger</CardTitle>
+              <CardDescription>De siste 50 endpoint-utførelsene</CardDescription>
             </CardHeader>
             <CardContent>
               {logsLoading ? (
-                <div className="text-center py-8">Loading logs...</div>
+                <div className="text-center py-8">Laster logger...</div>
               ) : (
                 <ExecutionLogsTable logs={logs} endpoints={endpoints} />
               )}
@@ -216,8 +252,8 @@ const EndpointManagement = () => {
         <Dialog open={!!editingEndpoint} onOpenChange={() => setEditingEndpoint(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Edit Endpoint</DialogTitle>
-              <DialogDescription>Update endpoint configuration</DialogDescription>
+              <DialogTitle>Rediger endpoint</DialogTitle>
+              <DialogDescription>Oppdater endpoint-konfigurasjon</DialogDescription>
             </DialogHeader>
             <EndpointForm 
               endpoint={editingEndpoint}

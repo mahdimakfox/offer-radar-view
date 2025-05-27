@@ -7,6 +7,8 @@ import { ApiMapping } from '@/services/types/dataAcquisitionTypes';
 import ImportHeader from './ApiImport/ImportHeader';
 import EndpointCard from './ApiImport/EndpointCard';
 import ImportSummary from './ApiImport/ImportSummary';
+import CategoryExecutionPanel from './ApiImport/CategoryExecutionPanel';
+import { Separator } from '@/components/ui/separator';
 
 interface FetchResult {
   provider_name: string;
@@ -78,60 +80,8 @@ const ApiImport = () => {
     }
   };
 
-  const handleFetchAll = async () => {
-    setLoading(true);
-    setResults([]);
-
-    try {
-      const fetchResults: FetchResult[] = [];
-      const categories = ['strom', 'forsikring', 'bank', 'mobil', 'internett', 'boligalarm'];
-      
-      for (let i = 0; i < apiMappings.length && i < categories.length; i++) {
-        const mapping = apiMappings[i];
-        const category = categories[i];
-        
-        setFetching(mapping.id);
-        const startTime = Date.now();
-        const result = await importData(category, mapping.id);
-        const executionTime = Date.now() - startTime;
-        
-        const fetchResult: FetchResult = {
-          provider_name: mapping.provider_name,
-          success: result !== null,
-          message: result 
-            ? `Importerte ${result.success} leverandører${result.failed > 0 ? `, ${result.failed} feilet` : ''}${result.usingFallback ? ' (fallback)' : ''}`
-            : 'Import feilet',
-          data_count: result?.success || 0,
-          using_fallback: result?.usingFallback || false,
-          execution_time: executionTime
-        };
-        
-        fetchResults.push(fetchResult);
-      }
-
-      setResults(fetchResults);
-
-      const successCount = fetchResults.filter(r => r.success).length;
-      const fallbackCount = fetchResults.filter(r => r.using_fallback).length;
-      const totalData = fetchResults.reduce((sum, r) => sum + (r.data_count || 0), 0);
-      const avgTime = fetchResults.reduce((sum, r) => sum + (r.execution_time || 0), 0) / fetchResults.length;
-
-      let message = `${successCount}/${fetchResults.length} endepunkter fullført. ${totalData} leverandører oppdatert.`;
-      if (fallbackCount > 0) {
-        message += ` ${fallbackCount} brukte fallback-system.`;
-      }
-      message += ` Gjennomsnittlig tid: ${Math.round(avgTime)}ms.`;
-
-      toast({
-        title: "Batch import fullført",
-        description: message,
-        variant: successCount === fetchResults.length && fallbackCount === 0 ? "default" : "destructive"
-      });
-
-    } finally {
-      setLoading(false);
-      setFetching(null);
-    }
+  const handleExecutionComplete = () => {
+    loadApiMappings();
   };
 
   return (
@@ -140,19 +90,31 @@ const ApiImport = () => {
         endpointCount={apiMappings.length}
         loading={loading}
         onRefresh={loadApiMappings}
-        onFetchAll={handleFetchAll}
+        onFetchAll={() => {}} // Replaced with CategoryExecutionPanel
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {apiMappings.map((mapping) => (
-          <EndpointCard
-            key={mapping.id}
-            mapping={mapping}
-            result={results.find(r => r.provider_name === mapping.provider_name)}
-            isLoading={fetching === mapping.id}
-            onFetch={handleFetchSingle}
-          />
-        ))}
+      {/* New Category Execution Panel */}
+      <CategoryExecutionPanel onExecutionComplete={handleExecutionComplete} />
+
+      <Separator />
+
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Legacy API Mappings</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Disse endepunktene er migrert til det nye endpoint-systemet. Bruk "Category Execution" over for å utføre importer.
+        </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {apiMappings.map((mapping) => (
+            <EndpointCard
+              key={mapping.id}
+              mapping={mapping}
+              result={results.find(r => r.provider_name === mapping.provider_name)}
+              isLoading={fetching === mapping.id}
+              onFetch={handleFetchSingle}
+            />
+          ))}
+        </div>
       </div>
 
       {apiMappings.length === 0 && (

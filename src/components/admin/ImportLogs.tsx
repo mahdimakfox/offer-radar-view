@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, Trash2, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import LogsStatsDashboard from './ImportLogs/LogsStatsDashboard';
+import { Separator } from '@/components/ui/separator';
 
 interface ImportLog {
   id: string;
@@ -34,13 +37,13 @@ const ImportLogs = () => {
         .from('import_logs')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100); // Increased limit for better analytics
 
       if (error) {
         console.error('Error loading logs:', error);
         toast({
-          title: "Error",
-          description: "Failed to load import logs",
+          title: "Feil",
+          description: "Kunne ikke laste importlogger",
           variant: "destructive"
         });
         return;
@@ -64,8 +67,8 @@ const ImportLogs = () => {
       if (error) {
         console.error('Error clearing logs:', error);
         toast({
-          title: "Error",
-          description: "Failed to clear logs",
+          title: "Feil",
+          description: "Kunne ikke slette logger",
           variant: "destructive"
         });
         return;
@@ -73,8 +76,8 @@ const ImportLogs = () => {
 
       setLogs([]);
       toast({
-        title: "Success",
-        description: "All logs cleared successfully"
+        title: "Suksess",
+        description: "Alle logger er slettet"
       });
     } catch (error) {
       console.error('Error:', error);
@@ -82,17 +85,17 @@ const ImportLogs = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+    return new Date(dateString).toLocaleString('no-NO');
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="default">Completed</Badge>;
+        return <Badge variant="default">Fullført</Badge>;
       case 'in_progress':
-        return <Badge variant="secondary">In Progress</Badge>;
+        return <Badge variant="secondary">Pågår</Badge>;
       case 'failed':
-        return <Badge variant="destructive">Failed</Badge>;
+        return <Badge variant="destructive">Feilet</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -109,7 +112,7 @@ const ImportLogs = () => {
         <div>
           <h3 className="text-lg font-semibold">Import Activity</h3>
           <p className="text-sm text-gray-600">
-            {logs.length} recent import operations
+            {logs.length} nylige importoperasjoner
           </p>
         </div>
         <div className="flex space-x-2">
@@ -120,7 +123,7 @@ const ImportLogs = () => {
             disabled={loading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            Oppdater
           </Button>
           <Button
             onClick={clearLogs}
@@ -129,34 +132,42 @@ const ImportLogs = () => {
             disabled={logs.length === 0}
           >
             <Trash2 className="h-4 w-4 mr-2" />
-            Clear Logs
+            Slett logger
           </Button>
         </div>
       </div>
 
+      {/* Enhanced Statistics Dashboard */}
+      {logs.length > 0 && (
+        <>
+          <LogsStatsDashboard logs={logs} />
+          <Separator />
+        </>
+      )}
+
       {logs.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Recent Imports</CardTitle>
+            <CardTitle className="text-lg">Nylige importer</CardTitle>
             <CardDescription>
-              Latest import operations and their results
+              Siste importoperasjoner og deres resultater
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead>Dato</TableHead>
+                  <TableHead>Kategori</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Success</TableHead>
-                  <TableHead>Failed</TableHead>
-                  <TableHead>Success Rate</TableHead>
+                  <TableHead>Totalt</TableHead>
+                  <TableHead>Suksess</TableHead>
+                  <TableHead>Feilet</TableHead>
+                  <TableHead>Suksessrate</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {logs.map((log) => (
+                {logs.slice(0, 20).map((log) => (
                   <TableRow key={log.id}>
                     <TableCell className="text-sm">
                       {formatDate(log.created_at)}
@@ -194,46 +205,10 @@ const ImportLogs = () => {
         <Card>
           <CardContent className="text-center py-12">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">No import logs found</p>
+            <p className="text-gray-500">Ingen importlogger funnet</p>
             <p className="text-sm text-gray-400 mt-2">
-              Import activity will appear here once you start importing data
+              Importaktivitet vil vises her når du starter import av data
             </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {logs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Statistics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {logs.length}
-                </div>
-                <div className="text-sm text-gray-600">Total Imports</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {logs.reduce((sum, log) => sum + log.successful_imports, 0)}
-                </div>
-                <div className="text-sm text-gray-600">Successful</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">
-                  {logs.reduce((sum, log) => sum + log.failed_imports, 0)}
-                </div>
-                <div className="text-sm text-gray-600">Failed</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">
-                  {logs.filter(log => log.import_status === 'completed').length}
-                </div>
-                <div className="text-sm text-gray-600">Completed</div>
-              </div>
-            </div>
           </CardContent>
         </Card>
       )}
