@@ -30,7 +30,7 @@ const Admin = () => {
         <Tabs defaultValue="endpoints" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="endpoints">Endpoint Management</TabsTrigger>
-            <TabsTrigger value="api-import">Data Import</TabsTrigger>
+            <TabsTrigger value="data-import">Data Import</TabsTrigger>
             <TabsTrigger value="logs">Import Logs</TabsTrigger>
           </TabsList>
 
@@ -48,7 +48,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="api-import">
+          <TabsContent value="data-import">
             <Card>
               <CardHeader>
                 <CardTitle>Data Import</CardTitle>
