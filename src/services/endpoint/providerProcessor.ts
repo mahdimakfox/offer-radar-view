@@ -22,125 +22,79 @@ export const insertProviderWithDuplicateDetection = async (
   sourceEndpointId: string
 ): Promise<{ success: boolean; action: 'inserted' | 'updated' | 'duplicate' | 'failed'; error?: string }> => {
   try {
-    console.log(`Processing provider: ${provider.name}`);
+    console.log(`Processing provider: ${provider.name} for category: ${category}`);
     
     const contentHash = calculateContentHash(provider);
     
-    // Check if provider already exists using the new unique constraint
-    const { data: existingProvider, error: selectError } = await supabase
+    // Use UPSERT with the new unique constraint
+    const { data: upsertedProvider, error: upsertError } = await supabase
       .from('providers')
+      .upsert({
+        name: provider.name,
+        provider_name: provider.name,
+        category: category,
+        price: provider.price,
+        rating: provider.rating,
+        description: provider.description,
+        external_url: provider.external_url,
+        org_number: provider.org_number,
+        logo_url: provider.logo_url,
+        pros: provider.pros,
+        cons: provider.cons,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'name,category',
+        ignoreDuplicates: false
+      })
       .select('id')
-      .eq('name', provider.name)
-      .eq('category', category)
+      .single();
+
+    if (upsertError) {
+      console.error('Error upserting provider:', upsertError);
+      return { 
+        success: false, 
+        error: upsertError.message,
+        action: 'failed'
+      };
+    }
+
+    // Check if this is a duplicate by looking at content hash
+    const { data: existingDuplicate, error: duplicateError } = await supabase
+      .from('provider_duplicates')
+      .select('id')
+      .eq('provider_id', upsertedProvider.id)
+      .eq('content_hash', contentHash)
       .maybeSingle();
 
-    if (selectError) {
-      console.error('Error checking existing provider:', selectError);
-      throw selectError;
+    if (duplicateError) {
+      console.error('Error checking duplicate:', duplicateError);
     }
 
-    if (existingProvider) {
-      // Check if content has changed
-      const { data: existingDuplicate, error: duplicateError } = await supabase
-        .from('provider_duplicates')
-        .select('id')
-        .eq('provider_id', existingProvider.id)
-        .eq('content_hash', contentHash)
-        .maybeSingle();
-
-      if (duplicateError) {
-        console.error('Error checking duplicate:', duplicateError);
-      }
-
-      if (existingDuplicate) {
-        console.log(`Duplicate content detected for provider: ${provider.name}`);
-        return { success: true, action: 'duplicate' };
-      }
-
-      // Update existing provider
-      const { error: updateError } = await supabase
-        .from('providers')
-        .update({
-          price: provider.price,
-          rating: provider.rating,
-          description: provider.description,
-          external_url: provider.external_url,
-          org_number: provider.org_number,
-          logo_url: provider.logo_url,
-          pros: provider.pros,
-          cons: provider.cons,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingProvider.id);
-
-      if (updateError) {
-        console.error('Error updating provider:', updateError);
-        throw updateError;
-      }
-
-      // Record the new content hash
-      const { error: duplicateInsertError } = await supabase
-        .from('provider_duplicates')
-        .insert({
-          provider_id: existingProvider.id,
-          content_hash: contentHash,
-          original_source: sourceEndpointId
-        });
-
-      if (duplicateInsertError) {
-        console.error('Error recording duplicate:', duplicateInsertError);
-      }
-
-      console.log(`Updated existing provider: ${provider.name}`);
-      return { success: true, action: 'updated' };
-    } else {
-      // Insert new provider using the new unique constraint
-      const { data: insertedProvider, error: insertError } = await supabase
-        .from('providers')
-        .insert({
-          name: provider.name,
-          provider_name: provider.name,
-          category: category,
-          price: provider.price,
-          rating: provider.rating,
-          description: provider.description,
-          external_url: provider.external_url,
-          org_number: provider.org_number,
-          logo_url: provider.logo_url,
-          pros: provider.pros,
-          cons: provider.cons,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select('id')
-        .single();
-
-      if (insertError) {
-        // Handle unique constraint violation gracefully
-        if (insertError.code === '23505') {
-          console.log(`Provider ${provider.name} already exists (caught by unique constraint), treating as duplicate`);
-          return { success: true, action: 'duplicate' };
-        }
-        console.error('Error inserting provider:', insertError);
-        throw insertError;
-      }
-
-      // Record the initial content hash
-      const { error: duplicateInsertError } = await supabase
-        .from('provider_duplicates')
-        .insert({
-          provider_id: insertedProvider.id,
-          content_hash: contentHash,
-          original_source: sourceEndpointId
-        });
-
-      if (duplicateInsertError) {
-        console.error('Error recording initial duplicate:', duplicateInsertError);
-      }
-
-      console.log(`Inserted new provider: ${provider.name}`);
-      return { success: true, action: 'inserted' };
+    if (existingDuplicate) {
+      console.log(`Duplicate content detected for provider: ${provider.name}`);
+      return { success: true, action: 'duplicate' };
     }
+
+    // Record the new content hash
+    const { error: duplicateInsertError } = await supabase
+      .from('provider_duplicates')
+      .insert({
+        provider_id: upsertedProvider.id,
+        content_hash: contentHash,
+        original_source: sourceEndpointId
+      });
+
+    if (duplicateInsertError) {
+      console.error('Error recording duplicate:', duplicateInsertError);
+    }
+
+    // Determine if this was an insert or update based on created_at vs updated_at
+    const wasUpdate = upsertedProvider.created_at !== upsertedProvider.updated_at;
+    const action = wasUpdate ? 'updated' : 'inserted';
+    
+    console.log(`${action} provider: ${provider.name}`);
+    return { success: true, action };
+    
   } catch (error) {
     return { 
       success: false, 

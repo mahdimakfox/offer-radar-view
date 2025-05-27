@@ -12,6 +12,7 @@ export interface ImportStats {
   successfulImports: number;
   errors: string[];
   duplicatesSkipped: number;
+  updated: number;
 }
 
 // Category mapping to category_id
@@ -44,7 +45,7 @@ const parseProvidersFile = (fileContent: string): ProviderEntry[] => {
   return providers;
 };
 
-const createProviderFromEntry = async (provider: ProviderEntry): Promise<{ success: boolean; isDuplicate: boolean; error?: string }> => {
+const createProviderFromEntry = async (provider: ProviderEntry): Promise<{ success: boolean; action: 'inserted' | 'updated' | 'duplicate'; error?: string }> => {
   try {
     console.log(`Processing provider: ${provider.name} (${provider.category})`);
     
@@ -54,7 +55,7 @@ const createProviderFromEntry = async (provider: ProviderEntry): Promise<{ succe
       console.warn(`Unknown category: ${provider.category}`);
       return { 
         success: false, 
-        isDuplicate: false, 
+        action: 'duplicate', 
         error: `Unknown category: ${provider.category}` 
       };
     }
@@ -75,36 +76,13 @@ const createProviderFromEntry = async (provider: ProviderEntry): Promise<{ succe
     };
 
     const generateRating = (): number => {
-      // Generate ratings between 3.0 and 5.0 with realistic distribution
       return Math.round((3.0 + Math.random() * 2.0) * 10) / 10;
     };
 
-    // First check if provider already exists
-    const { data: existingProvider, error: checkError } = await supabase
+    // Use UPSERT with the new unique constraint
+    const { data, error: upsertError } = await supabase
       .from('providers')
-      .select('id, name, category')
-      .eq('name', provider.name)
-      .eq('category', provider.category.toLowerCase())
-      .maybeSingle();
-
-    if (checkError) {
-      console.error(`Error checking existing provider ${provider.name}:`, checkError);
-      return { 
-        success: false, 
-        isDuplicate: false, 
-        error: checkError.message 
-      };
-    }
-
-    if (existingProvider) {
-      console.log(`Provider ${provider.name} already exists, skipping`);
-      return { success: true, isDuplicate: true };
-    }
-
-    // Insert new provider
-    const { data, error: insertError } = await supabase
-      .from('providers')
-      .insert({
+      .upsert({
         name: provider.name,
         provider_name: provider.name,
         external_url: provider.url,
@@ -115,76 +93,60 @@ const createProviderFromEntry = async (provider: ProviderEntry): Promise<{ succe
         description: `Kvalitetsleverandør av ${provider.category.toLowerCase()} med konkurransedyktige priser og god service.`,
         pros: ['Konkurransedyktige priser', 'God kundeservice', 'Pålitelig leverandør'],
         cons: ['Kan ha bindingstid', 'Begrenset tilgjengelighet'],
-        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'name,category',
+        ignoreDuplicates: false
       })
-      .select('id')
+      .select('id, created_at, updated_at')
       .single();
 
-    if (insertError) {
-      console.error(`Error inserting provider ${provider.name}:`, insertError);
+    if (upsertError) {
+      console.error(`Error upserting provider ${provider.name}:`, upsertError);
       return { 
         success: false, 
-        isDuplicate: false, 
-        error: insertError.message 
+        action: 'duplicate', 
+        error: upsertError.message 
       };
     }
 
-    console.log(`Successfully inserted provider: ${provider.name}`);
-    return { success: true, isDuplicate: false };
+    // Determine if this was an insert or update
+    const wasUpdate = data.created_at !== data.updated_at;
+    const action = wasUpdate ? 'updated' : 'inserted';
+    
+    console.log(`Successfully ${action} provider: ${provider.name}`);
+    return { success: true, action };
     
   } catch (error) {
     console.error(`Exception processing provider ${provider.name}:`, error);
     return { 
       success: false, 
-      isDuplicate: false, 
+      action: 'duplicate', 
       error: error instanceof Error ? error.message : 'Unknown error' 
     };
   }
 };
 
-const createEndpointFromEntry = async (provider: ProviderEntry): Promise<{ success: boolean; isDuplicate: boolean; error?: string }> => {
+const createEndpointFromEntry = async (provider: ProviderEntry): Promise<{ success: boolean; action: 'inserted' | 'updated' | 'duplicate'; error?: string }> => {
   try {
     console.log(`Creating endpoint for: ${provider.name} (${provider.category})`);
     
-    // First check if endpoint already exists
-    const { data: existingEndpoint, error: checkError } = await supabase
-      .from('provider_endpoints')
-      .select('id, name, category')
-      .eq('name', provider.name)
-      .eq('category', provider.category.toLowerCase())
-      .maybeSingle();
-
-    if (checkError) {
-      console.error(`Error checking existing endpoint ${provider.name}:`, checkError);
-      return { 
-        success: false, 
-        isDuplicate: false, 
-        error: checkError.message 
-      };
-    }
-
-    if (existingEndpoint) {
-      console.log(`Endpoint for ${provider.name} already exists, skipping`);
-      return { success: true, isDuplicate: true };
-    }
-
     // Create scraping configuration
     const scrapingConfig = {
       selectors: {
-        price: '.price, .pricing, [data-price]',
-        rating: '.rating, .stars, [data-rating]',
-        description: '.description, .info, .product-info'
+        price: '.price, .pricing, [data-price], .pris',
+        rating: '.rating, .stars, [data-rating], .vurdering',
+        description: '.description, .info, .product-info, .om-oss'
       },
       waitTime: 2000,
       maxRetries: 3,
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     };
 
-    // Insert new endpoint
-    const { data, error: insertError } = await supabase
+    // Use UPSERT with the new unique constraint
+    const { data, error: upsertError } = await supabase
       .from('provider_endpoints')
-      .insert({
+      .upsert({
         name: provider.name,
         provider_name: provider.name,
         category: provider.category.toLowerCase(),
@@ -195,29 +157,35 @@ const createEndpointFromEntry = async (provider: ProviderEntry): Promise<{ succe
         auth_required: false,
         scraping_config: scrapingConfig,
         auto_generated_url: true,
-        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'name,category',
+        ignoreDuplicates: false
       })
-      .select('id')
+      .select('id, created_at, updated_at')
       .single();
 
-    if (insertError) {
-      console.error(`Error inserting endpoint ${provider.name}:`, insertError);
+    if (upsertError) {
+      console.error(`Error upserting endpoint ${provider.name}:`, upsertError);
       return { 
         success: false, 
-        isDuplicate: false, 
-        error: insertError.message 
+        action: 'duplicate', 
+        error: upsertError.message 
       };
     }
 
-    console.log(`Successfully created endpoint: ${provider.name}`);
-    return { success: true, isDuplicate: false };
+    // Determine if this was an insert or update
+    const wasUpdate = data.created_at !== data.updated_at;
+    const action = wasUpdate ? 'updated' : 'inserted';
+    
+    console.log(`Successfully ${action} endpoint: ${provider.name}`);
+    return { success: true, action };
     
   } catch (error) {
     console.error(`Exception creating endpoint for ${provider.name}:`, error);
     return { 
       success: false, 
-      isDuplicate: false, 
+      action: 'duplicate', 
       error: error instanceof Error ? error.message : 'Unknown error' 
     };
   }
@@ -225,13 +193,14 @@ const createEndpointFromEntry = async (provider: ProviderEntry): Promise<{ succe
 
 export const dataImportService = {
   async importProvidersFromFile(fileContent: string): Promise<ImportStats> {
-    console.log('Starting provider import from file...');
+    console.log('Starting enhanced provider import from file...');
     
     const stats: ImportStats = {
       totalProcessed: 0,
       successfulImports: 0,
       errors: [],
-      duplicatesSkipped: 0
+      duplicatesSkipped: 0,
+      updated: 0
     };
 
     try {
@@ -248,10 +217,12 @@ export const dataImportService = {
           const endpointResult = await createEndpointFromEntry(provider);
           
           if (providerResult.success && endpointResult.success) {
-            if (providerResult.isDuplicate || endpointResult.isDuplicate) {
-              stats.duplicatesSkipped++;
-            } else {
+            if (providerResult.action === 'inserted' || endpointResult.action === 'inserted') {
               stats.successfulImports++;
+            } else if (providerResult.action === 'updated' || endpointResult.action === 'updated') {
+              stats.updated++;
+            } else {
+              stats.duplicatesSkipped++;
             }
           } else {
             const errors = [];
@@ -274,7 +245,7 @@ export const dataImportService = {
         }
       }
 
-      console.log('Import completed:', stats);
+      console.log('Enhanced import completed:', stats);
       return stats;
       
     } catch (error) {

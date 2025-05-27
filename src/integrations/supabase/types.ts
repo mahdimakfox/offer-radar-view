@@ -537,6 +537,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      clean_provider_name: {
+        Args: { provider_name: string }
+        Returns: string
+      }
       generate_provider_url: {
         Args: { provider_name: string; category: string }
         Returns: string
