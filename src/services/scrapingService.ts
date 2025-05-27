@@ -28,6 +28,7 @@ export const scrapingService = {
         const result = await performScrape(url, config, category);
         
         if (result.success && result.data.length > 0) {
+          await logScrapingAttempt(url, true);
           return {
             ...result,
             retriedCount: attempt,
@@ -47,6 +48,7 @@ export const scrapingService = {
       } catch (error) {
         lastError = error instanceof Error ? error.message : 'Unknown error';
         console.error(`Scraping attempt ${attempt + 1} failed:`, error);
+        await logScrapingAttempt(url, false, lastError);
         
         if (attempt < maxRetries) {
           await delay(1000 * (attempt + 1));
@@ -65,6 +67,7 @@ export const scrapingService = {
           const result = await performScrape(fallbackUrl, config, category);
           
           if (result.success && result.data.length > 0) {
+            await logScrapingAttempt(fallbackUrl, true);
             return {
               ...result,
               retriedCount,
@@ -76,6 +79,7 @@ export const scrapingService = {
         } catch (error) {
           console.error(`Fallback URL ${fallbackUrl} failed:`, error);
           lastError = error instanceof Error ? error.message : 'Fallback failed';
+          await logScrapingAttempt(fallbackUrl, false, lastError);
         }
       }
     }

@@ -43,3 +43,17 @@ export const scrapingLogger = {
     }
   }
 };
+
+// Add the missing logScrapingAttempt function
+export const logScrapingAttempt = async (
+  url: string,
+  success: boolean,
+  error?: string
+): Promise<void> => {
+  try {
+    console.log(`Scraping attempt for ${url}: ${success ? 'SUCCESS' : 'FAILED'}${error ? ` - ${error}` : ''}`);
+    // Additional logging logic can be added here if needed
+  } catch (logError) {
+    console.error('Failed to log scraping attempt:', logError);
+  }
+};

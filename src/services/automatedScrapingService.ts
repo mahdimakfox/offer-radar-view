@@ -83,7 +83,7 @@ export const automatedScrapingService = {
         sourceEndpointId
       );
       
-      // Handle the 'failed' action type by converting to 'duplicate' to fix build error
+      // Handle the 'failed' action type by converting to error response
       if (result.action === 'failed') {
         return {
           success: false,
@@ -92,7 +92,11 @@ export const automatedScrapingService = {
         };
       }
       
-      return result;
+      return {
+        success: result.success,
+        action: result.action,
+        error: result.error
+      };
       
     } catch (error) {
       console.error(`Exception upserting provider ${provider.name}:`, error);
