@@ -102,23 +102,25 @@ const Index = () => {
         </div>
 
         {/* Provider Grid */}
-        <ErrorBoundary 
-          fallback={
-            <div className="text-center py-16">
-              <p className="text-red-600 mb-4">Det oppstod en feil ved lasting av leverandører.</p>
-              <Button onClick={() => window.location.reload()}>
-                Last siden på nytt
-              </Button>
-            </div>
-          }
-        >
-          <ProviderCardNew 
-            category={selectedCategory}
-            searchTerm={searchTerm}
-            onSelect={handleProviderSelect}
-            selectedProviders={selectedProviders}
-          />
-        </ErrorBoundary>
+        <div id="providers-section">
+          <ErrorBoundary 
+            fallback={
+              <div className="text-center py-16">
+                <p className="text-red-600 mb-4">Det oppstod en feil ved lasting av leverandører.</p>
+                <Button onClick={() => window.location.reload()}>
+                  Last siden på nytt
+                </Button>
+              </div>
+            }
+          >
+            <ProviderCardNew 
+              category={selectedCategory}
+              searchTerm={searchTerm}
+              onSelect={handleProviderSelect}
+              selectedProviders={selectedProviders}
+            />
+          </ErrorBoundary>
+        </div>
 
         {/* Comparison Section */}
         {selectedProviders.length > 1 && (
