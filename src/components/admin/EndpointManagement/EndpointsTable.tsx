@@ -91,7 +91,9 @@ const EndpointsTable = ({ endpoints, onToggleActive, onEdit, onDelete }: Endpoin
                 <div className="font-medium flex items-center">
                   {endpoint.name}
                   {endpoint.auto_generated_url && (
-                    <Wand2 className="w-3 h-3 ml-1 text-blue-500" title="Auto-generated URL" />
+                    <span title="Auto-generated URL">
+                      <Wand2 className="w-3 h-3 ml-1 text-blue-500" />
+                    </span>
                   )}
                 </div>
                 {endpoint.provider_name && (

@@ -80,8 +80,20 @@ const EndpointFormContainer = ({ endpoint, onSave, onCancel }: EndpointFormConta
 
   const saveEndpointMutation = useMutation({
     mutationFn: async (data: EndpointFormData) => {
+      // Prepare the data object with all required fields
       const endpointData = {
-        ...data,
+        name: data.name,
+        provider_name: data.provider_name,
+        category: data.category,
+        endpoint_type: data.endpoint_type,
+        url: data.url,
+        priority: data.priority,
+        is_active: data.is_active,
+        auth_required: data.auth_required,
+        auth_config: data.auth_config,
+        scraping_config: data.scraping_config,
+        playwright_config: data.playwright_config,
+        auto_generated_url: data.auto_generated_url,
         updated_at: new Date().toISOString()
       };
 
