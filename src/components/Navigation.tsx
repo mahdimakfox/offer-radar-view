@@ -1,101 +1,84 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Menu, X, LogIn, Search, User, Settings, Zap, Wifi, Shield, Building, Smartphone, Home } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, Home, User, Settings, Search } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 interface NavigationProps {
-  selectedCategory?: string;
-  onCategoryChange?: (category: string) => void;
+  selectedCategory: string;
+  onCategoryChange: (category: string) => void;
 }
 
-const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const location = useLocation();
+const categories = [
+  { id: 'strom', name: 'Strøm', icon: '⚡' },
+  { id: 'mobil', name: 'Mobil', icon: '📱' },
+  { id: 'internett', name: 'Internett', icon: '🌐' },
+  { id: 'forsikring', name: 'Forsikring', icon: '🛡️' },
+  { id: 'bank', name: 'Bank', icon: '🏦' },
+  { id: 'boligalarm', name: 'Boligalarm', icon: '🔒' }
+];
 
-  const categories = [
-    { id: 'strom', name: 'Strøm', icon: Zap, description: 'Sammenlign strømpriser', count: 25 },
-    { id: 'internett', name: 'Internett', icon: Wifi, description: 'Bredbånd og fiber', count: 24 },
-    { id: 'forsikring', name: 'Forsikring', icon: Shield, description: 'Bil, hjem og reise', count: 22 },
-    { id: 'bank', name: 'Bank', icon: Building, description: 'Lån og sparing', count: 28 },
-    { id: 'mobil', name: 'Mobil', icon: Smartphone, description: 'Mobilabonnement', count: 21 },
-    { id: 'boligalarm', name: 'Boligalarm', icon: Home, description: 'Sikkerhet hjemme', count: 18 }
-  ];
+const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const handleCategoryClick = (categoryId: string) => {
-    if (onCategoryChange) {
-      onCategoryChange(categoryId);
-    }
-    setIsMenuOpen(false);
+    onCategoryChange(categoryId);
+    navigate(`/?category=${categoryId}`);
+    setIsOpen(false);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Searching for:', searchTerm);
-  };
+  const isHomePage = location.pathname === '/';
 
   return (
-    <nav className="bg-white shadow-lg border-b-2 border-blue-50">
-      {/* Main Navigation */}
+    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          {/* Logo - Moved from left corner for better balance */}
-          <Link to="/" className="flex items-center space-x-4 ml-8">
-            <div className="flex flex-col items-center">
-              <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-1">
-                Sky Smart Valg
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="text-xs text-blue-600 border-blue-200">
-                  Sammenlign
-                </Badge>
-                <Badge variant="outline" className="text-xs text-green-600 border-green-200">
-                  Spar
-                </Badge>
-              </div>
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="bg-blue-600 text-white p-2 rounded-lg">
+              <Search className="h-6 w-6" />
             </div>
+            <span className="text-xl font-bold text-gray-900">PrisJakt</span>
           </Link>
 
-          {/* Search Bar - Desktop */}
-          <div className="hidden md:flex flex-1 max-w-2xl mx-8">
-            <form onSubmit={handleSearch} className="w-full relative">
-              <Input
-                type="text"
-                placeholder="Søk på tjenester, leverandører eller tilbud..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-12 pl-4 pr-12 text-base border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-              />
-              <Button 
-                type="submit"
-                size="sm"
-                className="absolute right-2 top-2 h-8 bg-blue-600 hover:bg-blue-700"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-            </form>
-          </div>
-
-          {/* User Actions */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span>Mine tilbud</span>
-            </Button>
-            <Link to="/login">
-              <Button variant="outline" size="sm" className="flex items-center space-x-2">
-                <LogIn className="h-4 w-4" />
-                <span>Logg inn</span>
-              </Button>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            <Link 
+              to="/" 
+              className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isHomePage ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-blue-600'
+              }`}
+            >
+              <Home className="h-4 w-4" />
+              <span>Hjem</span>
             </Link>
-            <Link to="/admin">
-              <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                <Settings className="h-4 w-4" />
-                <span>Admin</span>
-              </Button>
+
+            {/* Category Navigation */}
+            {isHomePage && (
+              <div className="flex items-center space-x-1">
+                {categories.map((category) => (
+                  <Button
+                    key={category.id}
+                    variant={selectedCategory === category.id ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => handleCategoryClick(category.id)}
+                    className="flex items-center space-x-1"
+                  >
+                    <span>{category.icon}</span>
+                    <span className="hidden lg:inline">{category.name}</span>
+                  </Button>
+                ))}
+              </div>
+            )}
+
+            <Link 
+              to="/admin" 
+              className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Admin</span>
             </Link>
           </div>
 
@@ -104,104 +87,56 @@ const Navigation = ({ selectedCategory, onCategoryChange }: NavigationProps) => 
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => setIsOpen(!isOpen)}
             >
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
         </div>
 
-        {/* Category Navigation */}
-        {location.pathname === '/' && (
-          <div className="hidden md:flex items-center justify-center space-x-1 pb-4 border-b border-gray-100">
-            {categories.map((category) => {
-              const IconComponent = category.icon;
-              return (
-                <button
-                  key={category.id}
-                  onClick={() => handleCategoryClick(category.id)}
-                  className={`group flex flex-col items-center px-6 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    selectedCategory === category.id
-                      ? 'bg-blue-100 text-blue-700 shadow-md'
-                      : 'text-gray-600 hover:text-blue-700 hover:bg-blue-50'
-                  }`}
-                >
-                  <IconComponent className="h-6 w-6 mb-1 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="font-semibold">{category.name}</span>
-                  <span className="text-xs opacity-75">{category.description}</span>
-                  <Badge variant="secondary" className="text-xs mt-1">
-                    {category.count} tilbud
-                  </Badge>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
         {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100">
-            {/* Mobile Search */}
-            <div className="mb-4">
-              <form onSubmit={handleSearch} className="relative">
-                <Input
-                  type="text"
-                  placeholder="Søk..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-12 pl-4 pr-12"
-                />
-                <Button 
-                  type="submit"
-                  size="sm"
-                  className="absolute right-2 top-2 h-8"
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-              </form>
-            </div>
-
+        {isOpen && (
+          <div className="md:hidden border-t border-gray-200 py-4">
             <div className="space-y-2">
-              {location.pathname === '/' && categories.map((category) => {
-                const IconComponent = category.icon;
-                return (
-                  <button
-                    key={category.id}
-                    onClick={() => handleCategoryClick(category.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                      selectedCategory === category.id
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                  >
-                    <IconComponent className="h-5 w-5" />
-                    <div className="text-left flex-1">
-                      <div className="flex items-center justify-between">
-                        <span>{category.name}</span>
-                        <Badge variant="secondary" className="text-xs">
-                          {category.count}
-                        </Badge>
-                      </div>
-                      <div className="text-xs opacity-75">{category.description}</div>
-                    </div>
-                  </button>
-                );
-              })}
-              
-              <div className="pt-4 space-y-2">
-                <Link to="/login" className="block">
-                  <Button variant="outline" size="sm" className="w-full justify-start space-x-2">
-                    <LogIn className="h-4 w-4" />
-                    <span>Logg inn</span>
-                  </Button>
-                </Link>
-                <Link to="/admin" className="block">
-                  <Button variant="ghost" size="sm" className="w-full justify-start space-x-2">
-                    <Settings className="h-4 w-4" />
-                    <span>Admin</span>
-                  </Button>
-                </Link>
-              </div>
+              <Link 
+                to="/" 
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  isHomePage ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                <Home className="h-4 w-4 inline mr-2" />
+                Hjem
+              </Link>
+
+              {isHomePage && (
+                <div className="pl-4 space-y-1">
+                  <div className="text-sm font-medium text-gray-500 mb-2">Kategorier:</div>
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryClick(category.id)}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        selectedCategory === category.id 
+                          ? 'text-blue-600 bg-blue-50' 
+                          : 'text-gray-600 hover:text-blue-600'
+                      }`}
+                    >
+                      <span className="mr-2">{category.icon}</span>
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <Link 
+                to="/admin" 
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700"
+                onClick={() => setIsOpen(false)}
+              >
+                <Settings className="h-4 w-4 inline mr-2" />
+                Admin
+              </Link>
             </div>
           </div>
         )}

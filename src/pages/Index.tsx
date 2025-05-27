@@ -1,5 +1,6 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import CategoryGrid from '@/components/CategoryGrid';
@@ -14,10 +15,19 @@ import { Search } from 'lucide-react';
 import { Provider } from '@/services/providerService';
 
 const Index = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState('strom');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProviders, setSelectedProviders] = useState<Provider[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Handle URL parameters for category
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam && ['strom', 'forsikring', 'bank', 'mobil', 'internett', 'boligalarm'].includes(categoryParam)) {
+      setSelectedCategory(categoryParam);
+    }
+  }, [searchParams]);
 
   const handleProviderSelect = (provider: Provider) => {
     if (selectedProviders.length < 4 && !selectedProviders.find(p => p.id === provider.id)) {
@@ -39,6 +49,9 @@ const Index = () => {
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     setSelectedProviders([]); // Clear selections when changing category
+    
+    // Update URL with category parameter
+    setSearchParams({ category });
   };
 
   return (
@@ -88,7 +101,7 @@ const Index = () => {
           </form>
         </div>
 
-        {/* Provider Grid - Now uses global state management with error boundaries */}
+        {/* Provider Grid */}
         <ErrorBoundary 
           fallback={
             <div className="text-center py-16">
