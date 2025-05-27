@@ -52,6 +52,26 @@ export interface ExecutionResult {
   retriedCount?: number;
 }
 
+// Helper function to safely convert database response to ProviderEndpoint
+const convertDatabaseEndpoint = (dbEndpoint: DatabaseEndpoint): ProviderEndpoint => {
+  return {
+    id: dbEndpoint.id,
+    category: dbEndpoint.category,
+    name: dbEndpoint.name,
+    endpoint_type: dbEndpoint.endpoint_type as 'api' | 'scraping',
+    url: dbEndpoint.url,
+    priority: dbEndpoint.priority,
+    is_active: dbEndpoint.is_active,
+    auth_required: dbEndpoint.auth_required,
+    auth_config: dbEndpoint.auth_config,
+    scraping_config: dbEndpoint.scraping_config as ScrapingConfig | undefined,
+    last_success_at: dbEndpoint.last_success_at,
+    failure_count: dbEndpoint.failure_count,
+    total_requests: dbEndpoint.total_requests,
+    success_rate: dbEndpoint.success_rate
+  };
+};
+
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const logExecution = async (
@@ -358,11 +378,8 @@ export const endpointService = {
       throw error;
     }
 
-    // Convert database response to ProviderEndpoint type
-    return (data as DatabaseEndpoint[]).map(endpoint => ({
-      ...endpoint,
-      endpoint_type: endpoint.endpoint_type as 'api' | 'scraping'
-    }));
+    // Convert database response to ProviderEndpoint type using helper function
+    return (data as DatabaseEndpoint[]).map(convertDatabaseEndpoint);
   },
 
   async executeEndpoint(endpointId: string, executionType: 'manual' | 'scheduled' | 'fallback' = 'manual'): Promise<ExecutionResult> {
@@ -380,11 +397,8 @@ export const endpointService = {
       throw new Error('Endpoint is not active');
     }
 
-    // Convert database response to ProviderEndpoint type
-    const typedEndpoint: ProviderEndpoint = {
-      ...endpoint,
-      endpoint_type: endpoint.endpoint_type as 'api' | 'scraping'
-    };
+    // Convert database response to ProviderEndpoint type using helper function
+    const typedEndpoint = convertDatabaseEndpoint(endpoint as DatabaseEndpoint);
 
     return executeEndpoint(typedEndpoint, executionType);
   },
