@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { automatedScrapingService } from '@/services/automatedScrapingService';
-import { Globe, Database, FileText, Zap, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Globe, Database, FileText, Zap, CheckCircle, XCircle, AlertCircle, Download } from 'lucide-react';
 
 interface AutomatedScrapingPanelProps {
   onImportComplete?: () => void;
@@ -32,7 +32,7 @@ const AutomatedScrapingPanel: React.FC<AutomatedScrapingPanelProps> = ({ onImpor
     try {
       toast({
         title: "Starter automatisert scraping",
-        description: "Leser leverandører fra fil og starter scraping-prosess..."
+        description: "Leser leverandører fra fil og starter scraping med AllOrigins API..."
       });
 
       setCurrentStep('Leser leverandører fra LEVERANDØRER.txt...');
@@ -83,11 +83,11 @@ const AutomatedScrapingPanel: React.FC<AutomatedScrapingPanelProps> = ({ onImpor
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5" />
-            Automatisert Scraping og Import
+            Automatisert Scraping med AllOrigins API
           </CardTitle>
           <CardDescription>
             Komplett automatisert prosess som leser leverandører fra LEVERANDØRER.txt, 
-            scraper data fra nettsidene, og lagrer i databasen
+            henter HTML via AllOrigins API, ekstraherer relevant data, og lagrer i databasen
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -99,7 +99,7 @@ const AutomatedScrapingPanel: React.FC<AutomatedScrapingPanelProps> = ({ onImpor
               size="lg"
               className="flex items-center gap-2"
             >
-              <Globe className="w-4 h-4" />
+              <Download className="w-4 h-4" />
               {isRunning ? 'Kjører scraping...' : 'Start automatisert scraping'}
             </Button>
             
@@ -235,21 +235,34 @@ const AutomatedScrapingPanel: React.FC<AutomatedScrapingPanelProps> = ({ onImpor
             <div className="flex items-start gap-2">
               <Globe className="w-4 h-4 mt-0.5 text-green-500" />
               <div>
-                <strong>Steg 2:</strong> Scraper data fra hver leverandørs nettside
+                <strong>Steg 2:</strong> Henter HTML via AllOrigins API for å unngå CORS-problemer
               </div>
             </div>
             <div className="flex items-start gap-2">
-              <Database className="w-4 h-4 mt-0.5 text-purple-500" />
+              <Zap className="w-4 h-4 mt-0.5 text-purple-500" />
               <div>
-                <strong>Steg 3:</strong> Lagrer/oppdaterer data i database med UPSERT
+                <strong>Steg 3:</strong> Ekstraherer data som beskrivelse, kontaktinfo, priser og logo
               </div>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle className="w-4 h-4 mt-0.5 text-orange-500" />
+              <Database className="w-4 h-4 mt-0.5 text-orange-500" />
               <div>
-                <strong>Steg 4:</strong> Logger resultater og feil for senere analyse
+                <strong>Steg 4:</strong> Lagrer/oppdaterer data i database med duplikatdeteksjon
               </div>
             </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 mt-0.5 text-teal-500" />
+              <div>
+                <strong>Steg 5:</strong> Logger resultater og feil for senere analyse
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>AllOrigins API:</strong> Brukes for å hente HTML fra leverandørenes nettsider 
+              uten CORS-problemer. Dette gjør at vi kan analysere innholdet og ekstraktere relevant informasjon.
+            </p>
           </div>
         </CardContent>
       </Card>
