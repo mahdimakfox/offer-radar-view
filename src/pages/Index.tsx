@@ -1,6 +1,5 @@
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import CategoryGrid from '@/components/CategoryGrid';
@@ -15,19 +14,10 @@ import { Search } from 'lucide-react';
 import { Provider } from '@/services/providerService';
 
 const Index = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState('strom');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProviders, setSelectedProviders] = useState<Provider[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-
-  // Handle URL parameters for category
-  useEffect(() => {
-    const categoryParam = searchParams.get('category');
-    if (categoryParam && ['strom', 'forsikring', 'bank', 'mobil', 'internett', 'boligalarm'].includes(categoryParam)) {
-      setSelectedCategory(categoryParam);
-    }
-  }, [searchParams]);
 
   const handleProviderSelect = (provider: Provider) => {
     if (selectedProviders.length < 4 && !selectedProviders.find(p => p.id === provider.id)) {
@@ -49,9 +39,6 @@ const Index = () => {
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     setSelectedProviders([]); // Clear selections when changing category
-    
-    // Update URL with category parameter
-    setSearchParams({ category });
   };
 
   return (
@@ -101,26 +88,24 @@ const Index = () => {
           </form>
         </div>
 
-        {/* Provider Grid */}
-        <div id="providers-section">
-          <ErrorBoundary 
-            fallback={
-              <div className="text-center py-16">
-                <p className="text-red-600 mb-4">Det oppstod en feil ved lasting av leverandører.</p>
-                <Button onClick={() => window.location.reload()}>
-                  Last siden på nytt
-                </Button>
-              </div>
-            }
-          >
-            <ProviderCardNew 
-              category={selectedCategory}
-              searchTerm={searchTerm}
-              onSelect={handleProviderSelect}
-              selectedProviders={selectedProviders}
-            />
-          </ErrorBoundary>
-        </div>
+        {/* Provider Grid - Now uses global state management with error boundaries */}
+        <ErrorBoundary 
+          fallback={
+            <div className="text-center py-16">
+              <p className="text-red-600 mb-4">Det oppstod en feil ved lasting av leverandører.</p>
+              <Button onClick={() => window.location.reload()}>
+                Last siden på nytt
+              </Button>
+            </div>
+          }
+        >
+          <ProviderCardNew 
+            category={selectedCategory}
+            searchTerm={searchTerm}
+            onSelect={handleProviderSelect}
+            selectedProviders={selectedProviders}
+          />
+        </ErrorBoundary>
 
         {/* Comparison Section */}
         {selectedProviders.length > 1 && (

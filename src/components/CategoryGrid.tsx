@@ -10,42 +10,42 @@ const categories = [
     id: 'strom',
     name: 'Strøm',
     icon: '⚡',
-    description: 'Sammenlign strømpriser',
+    description: 'Sammenlign strømpriser og finn billigste tilbud',
     color: 'from-yellow-400 to-orange-500'
-  },
-  {
-    id: 'internett',
-    name: 'Internett',
-    icon: '🌐',
-    description: 'Bredbånd og fiber',
-    color: 'from-cyan-400 to-blue-500'
   },
   {
     id: 'forsikring',
     name: 'Forsikring',
     icon: '🛡️',
-    description: 'Bil, hjem og reise',
+    description: 'Bil-, reise- og innboforsikring med best dekning',
     color: 'from-green-400 to-blue-500'
   },
   {
     id: 'bank',
     name: 'Bank',
     icon: '🏦',
-    description: 'Lån og sparing',
+    description: 'Lån, sparing og kredittkort med beste renter',
     color: 'from-blue-400 to-purple-500'
   },
   {
     id: 'mobil',
     name: 'Mobil',
     icon: '📱',
-    description: 'Mobilabonnement',
+    description: 'Mobilabonnement og telefoner til lavest pris',
     color: 'from-pink-400 to-red-500'
+  },
+  {
+    id: 'internett',
+    name: 'Internett',
+    icon: '🌐',
+    description: 'Fiber, bredbånd og TV-pakker med høy hastighet',
+    color: 'from-cyan-400 to-blue-500'
   },
   {
     id: 'boligalarm',
     name: 'Boligalarm',
     icon: '🔒',
-    description: 'Sikkerhet hjemme',
+    description: 'Sikkerhet og overvåkning for hjemmet ditt',
     color: 'from-gray-400 to-gray-600'
   }
 ];
@@ -69,17 +69,6 @@ const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps)
   const handleCategoryClick = (categoryId: string) => {
     console.log(`Category selected: ${categoryId}`);
     onCategoryChange(categoryId);
-    
-    // Scroll to providers section after a short delay to allow state update
-    setTimeout(() => {
-      const providersSection = document.getElementById('providers-section');
-      if (providersSection) {
-        providersSection.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
-    }, 100);
   };
 
   const getCategoryCount = (categoryId: string): number => {
@@ -87,9 +76,9 @@ const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps)
   };
 
   const formatCategoryCount = (count: number): string => {
-    if (count === 0) return '0 tilbud';
-    if (count === 1) return '1 tilbud';
-    return `${count} tilbud`;
+    if (count === 0) return 'Ingen leverandører';
+    if (count === 1) return '1 leverandør';
+    return `${count} leverandører`;
   };
 
   if (error) {
@@ -107,7 +96,7 @@ const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps)
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-16">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-16">
       {categories.map((category) => {
         const count = getCategoryCount(category.id);
         const isSelected = selectedCategory === category.id;
@@ -120,7 +109,7 @@ const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps)
               isSelected
                 ? 'bg-white border-2 border-blue-500 shadow-xl scale-105'
                 : 'bg-white hover:bg-gray-50 border border-gray-200 hover:border-blue-300'
-            }`}
+            } ${!hasProviders && !loading ? 'opacity-75' : ''}`}
             onClick={() => handleCategoryClick(category.id)}
             onMouseEnter={() => handleCategoryHover(category.id)}
           >
@@ -134,34 +123,37 @@ const CategoryGrid = ({ selectedCategory, onCategoryChange }: CategoryGridProps)
               </div>
               
               {/* Category Name */}
-              <h3 className={`font-bold text-xl mb-2 transition-colors ${
+              <h3 className={`font-bold text-lg sm:text-xl mb-3 transition-colors ${
                 isSelected ? 'text-blue-700' : 'text-gray-900 group-hover:text-blue-700'
               }`}>
                 {category.name}
               </h3>
               
               {/* Description */}
-              <p className="text-sm text-gray-600 mb-4 group-hover:text-gray-700 transition-colors">
+              <p className="text-xs sm:text-sm text-gray-600 mb-4 line-clamp-2 group-hover:text-gray-700 transition-colors">
                 {category.description}
               </p>
               
               {/* Provider Count */}
-              <div className={`text-lg font-semibold transition-colors ${
-                isSelected 
-                  ? 'text-blue-600' 
-                  : hasProviders
-                    ? 'text-gray-800 group-hover:text-blue-600'
-                    : 'text-red-600'
-              }`}>
+              <Badge 
+                variant={isSelected ? "default" : "secondary"}
+                className={`text-xs font-medium transition-all ${
+                  isSelected 
+                    ? 'bg-blue-600 text-white' 
+                    : hasProviders
+                      ? 'bg-gray-100 text-gray-700 group-hover:bg-blue-100 group-hover:text-blue-700'
+                      : 'bg-red-50 text-red-600 group-hover:bg-red-100'
+                }`}
+              >
                 {loading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                  <div className="flex items-center space-x-1">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b border-current"></div>
                     <span>Laster...</span>
                   </div>
                 ) : (
                   formatCategoryCount(count)
                 )}
-              </div>
+              </Badge>
               
               {/* Selection Indicator */}
               {isSelected && (

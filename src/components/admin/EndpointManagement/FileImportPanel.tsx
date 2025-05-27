@@ -1,9 +1,9 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { FileUp, Upload, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { FileUp, Upload, CheckCircle, AlertCircle } from 'lucide-react';
 import { dataImportService, ImportStats } from '@/services/dataImportService';
 
 interface FileImportPanelProps {
@@ -13,16 +13,7 @@ interface FileImportPanelProps {
 const FileImportPanel = ({ onImportComplete }: FileImportPanelProps) => {
   const [importing, setImporting] = useState(false);
   const [importStats, setImportStats] = useState<ImportStats | null>(null);
-  const [autoImported, setAutoImported] = useState(false);
   const { toast } = useToast();
-
-  // Auto-import on component mount
-  useEffect(() => {
-    if (!autoImported) {
-      handleFileImport();
-      setAutoImported(true);
-    }
-  }, [autoImported]);
 
   const handleFileImport = async () => {
     setImporting(true);
@@ -40,7 +31,7 @@ const FileImportPanel = ({ onImportComplete }: FileImportPanelProps) => {
       if (stats.errors.length === 0) {
         toast({
           title: "Import vellykket",
-          description: `${stats.successfulImports} leverandører opprettet, ${stats.duplicatesSkipped} duplikater hoppet over`,
+          description: `${stats.successfulImports} endepunkter opprettet, ${stats.duplicatesSkipped} duplikater hoppet over`,
         });
       } else {
         toast({
@@ -78,29 +69,18 @@ const FileImportPanel = ({ onImportComplete }: FileImportPanelProps) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="text-sm text-gray-600">
-            <p>Dette vil importere alle leverandører fra LEVERANDØRER.txt og lagre dem i databasen.</p>
-            <p className="mt-2">Eksisterende leverandører vil bli hoppet over for å unngå duplikater.</p>
+            <p>Dette vil importere alle leverandører fra LEVERANDØRER.txt og automatisk opprette scraping-endepunkter for hver av dem.</p>
+            <p className="mt-2">Eksisterende endepunkter vil bli hoppet over for å unngå duplikater.</p>
           </div>
           
-          <div className="flex space-x-2">
-            <Button 
-              onClick={handleFileImport}
-              disabled={importing}
-              className="flex-1"
-            >
-              {importing ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Importerer...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  {importStats ? 'Import på nytt' : 'Start import'}
-                </>
-              )}
-            </Button>
-          </div>
+          <Button 
+            onClick={handleFileImport}
+            disabled={importing}
+            className="w-full"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            {importing ? 'Importerer...' : 'Start import'}
+          </Button>
         </CardContent>
       </Card>
 
@@ -124,7 +104,7 @@ const FileImportPanel = ({ onImportComplete }: FileImportPanelProps) => {
               </div>
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">{importStats.successfulImports}</div>
-                <div className="text-sm text-green-700">Nye leverandører</div>
+                <div className="text-sm text-green-700">Opprettet</div>
               </div>
               <div className="text-center p-3 bg-yellow-50 rounded-lg">
                 <div className="text-2xl font-bold text-yellow-600">{importStats.duplicatesSkipped}</div>
@@ -139,13 +119,10 @@ const FileImportPanel = ({ onImportComplete }: FileImportPanelProps) => {
             {importStats.errors.length > 0 && (
               <div className="mt-4">
                 <h4 className="font-medium text-red-700 mb-2">Feil som oppstod:</h4>
-                <ul className="list-disc list-inside space-y-1 text-sm text-red-600 max-h-32 overflow-y-auto">
-                  {importStats.errors.slice(0, 10).map((error, index) => (
+                <ul className="list-disc list-inside space-y-1 text-sm text-red-600">
+                  {importStats.errors.map((error, index) => (
                     <li key={index}>{error}</li>
                   ))}
-                  {importStats.errors.length > 10 && (
-                    <li className="text-gray-500">... og {importStats.errors.length - 10} flere feil</li>
-                  )}
                 </ul>
               </div>
             )}
