@@ -4,7 +4,7 @@ title: "Leverandører - Finn din ideelle leverandør"
 description: "En omfattende database over leverandører innen ulike bransjer"
 author: "Leverandører Team"
 
-# GitHub Pages settings
+# GitHub Pages settings - REPLACE THESE WITH YOUR ACTUAL VALUES
 url: "https://YOUR_USERNAME.github.io"
 baseurl: "/YOUR_REPOSITORY_NAME"
 
@@ -28,10 +28,9 @@ exclude:
   - eslint.config.js
   - postcss.config.js
   - bun.lockb
-
-# Include important files
-include:
-  - _site/
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
 
 # Collections (if needed)
 collections:
